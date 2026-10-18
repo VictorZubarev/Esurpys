@@ -1,8 +1,8 @@
-# Esurpy Development Roadmap
+# Esurpys Development Roadmap
 
 ## Purpose
 
-This document records the planned development of Esurpy, including product milestones, platform expansion, research activities, and evaluation.
+This document records the planned development of Esurpys, including product milestones, platform expansion, research activities, and evaluation.
 
 ## Phase 1: Web Platform
 

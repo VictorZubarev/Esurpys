@@ -1,4 +1,4 @@
-# Esurpy
+# Esurpys
 
 ### An Independent Software Project for Content Creation and Digital Workflows
 
@@ -8,7 +8,7 @@
 
 ## About the Project
 
-**Esurpy** is an early-stage software project focused on simplifying content creation and improving digital workflows.
+**Esurpys** is an early-stage software project focused on simplifying content creation and improving digital workflows.
 
 The project begins with a web-based platform, with plans to explore mobile applications and additional distribution channels as development progresses.
 
@@ -58,7 +58,7 @@ Technical documentation, development milestones, research plans, and release not
 
 **Status:** Early Development
 
-Esurpy is in its early development stage. Features, timelines, and future directions may evolve based on testing, research, and user feedback.
+Esurpys is in its early development stage. Features, timelines, and future directions may evolve based on testing, research, and user feedback.
 
 ## Development and Authorship
 
@@ -74,6 +74,6 @@ For questions or project-related discussions, please open an issue in this repos
 
 ---
 
-### Building Esurpy Step by Step
+### Building Esurpys Step by Step
 
 *Our focus is on developing a useful product, validating ideas through real-world evidence, and improving the platform over time.*

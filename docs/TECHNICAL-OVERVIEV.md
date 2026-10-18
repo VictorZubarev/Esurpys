@@ -1,12 +1,12 @@
-# Esurpy Technical Overview
+# Esurpys Technical Overview
 
 ## 1. Purpose
 
-This document describes the intended technical direction of Esurpy. It will be updated as implementation decisions are made and verified.
+This document describes the intended technical direction of Esurpys. It will be updated as implementation decisions are made and verified.
 
 ## 2. Product Overview
 
-Esurpy is an early-stage software project focused on content creation and digital workflows.
+Esurpys is an early-stage software project focused on content creation and digital workflows.
 
 The initial objective is to develop a web platform with a clear landing page, content-generation functionality, and a results interface.
 
