@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type Language = "en" | "ru";
 
@@ -45,6 +45,24 @@ const content = {
 
 export default function Home() {
   const [language, setLanguage] = useState<Language>("en");
+  const [languageLoaded, setLanguageLoaded] = useState(false);
+
+  useEffect(() => {
+    const savedLanguage = window.localStorage.getItem("esurpys-language");
+
+    if (savedLanguage === "en" || savedLanguage === "ru") {
+      setLanguage(savedLanguage);
+    }
+
+    setLanguageLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (languageLoaded) {
+      window.localStorage.setItem("esurpys-language", language);
+    }
+  }, [language, languageLoaded]);
+
   const t = content[language];
 
   return (
