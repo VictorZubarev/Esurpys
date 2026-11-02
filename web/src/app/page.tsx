@@ -4,6 +4,8 @@ import Link from "next/link";
 
 import { useEffect, useState } from "react";
 
+import EsurpysNavigation from "@/shared/EsurpysNavigation";
+
 type Language = "en" | "ru";
 
 const content = {
@@ -99,19 +101,33 @@ const navigation = [
 export default function HomePage() {
   const [language, setLanguage] = useState<Language>("en");
 
-  useEffect(() => {
-    const savedLanguage = localStorage.getItem("esurpys-language");
+useEffect(() => {
+  const savedLanguage = localStorage.getItem("esurpys-language");
 
-    if (savedLanguage === "en" || savedLanguage === "ru") {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setLanguage(savedLanguage);
-    }
-  }, []);
-
-  function changeLanguage(nextLanguage: Language) {
-    setLanguage(nextLanguage);
-    localStorage.setItem("esurpys-language", nextLanguage);
+  if (savedLanguage === "en" || savedLanguage === "ru") {
+    setLanguage(savedLanguage);
   }
+
+  function handleLanguageChange(event: Event) {
+    const nextLanguage = (event as CustomEvent<Language>).detail;
+
+    if (nextLanguage === "en" || nextLanguage === "ru") {
+      setLanguage(nextLanguage);
+    }
+  }
+
+  window.addEventListener(
+    "esurpys-language-change",
+    handleLanguageChange
+  );
+
+  return () => {
+    window.removeEventListener(
+      "esurpys-language-change",
+      handleLanguageChange
+    );
+  };
+}, []);
 
   const t = content[language];
 
@@ -147,55 +163,7 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen overflow-hidden bg-slate-950 text-white">
-      <header className="relative z-10 border-b border-white/10 bg-slate-950/90">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-5">
-          <Link href="/" className="shrink-0 text-2xl font-bold tracking-tight">
-            Esurpys<span className="text-cyan-400">.</span>
-          </Link>
-
-          <nav className="flex flex-wrap items-center gap-x-5 gap-y-2">
-            {navigation.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="text-sm text-slate-300 transition hover:text-cyan-300"
-              >
-                {t[item.key]}
-              </Link>
-            ))}
-
-            <div className="flex rounded-full border border-white/10 bg-slate-900 p-1">
-              <button
-                type="button"
-                onClick={() => changeLanguage("en")}
-                aria-label="Switch to English"
-                aria-pressed={language === "en"}
-                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                  language === "en"
-                    ? "bg-cyan-400 text-slate-950"
-                    : "text-slate-300 hover:text-white"
-                }`}
-              >
-                EN
-              </button>
-
-              <button
-                type="button"
-                onClick={() => changeLanguage("ru")}
-                aria-label="Переключить на русский"
-                aria-pressed={language === "ru"}
-                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                  language === "ru"
-                    ? "bg-cyan-400 text-slate-950"
-                    : "text-slate-300 hover:text-white"
-                }`}
-              >
-                RU
-              </button>
-            </div>
-          </nav>
-        </div>
-      </header>
+      <EsurpysNavigation />
 
       <section className="relative">
         <div className="pointer-events-none absolute inset-0">
