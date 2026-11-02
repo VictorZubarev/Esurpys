@@ -1,26 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { countries, type Language } from "@/lib/countries";
+import { useState } from "react";
+import { countries } from "@/lib/countries";
 import CountryFlag from "@/components/CountryFlag";
+import EsurpysNavigation from "@/shared/EsurpysNavigation";
+import { useLanguage } from "@/shared/LanguageProvider";
 
 export default function CountriesPage() {
-  const [language, setLanguage] = useState<Language>("en");
+  const { language } = useLanguage();
   const [search, setSearch] = useState("");
-
-  useEffect(() => {
-    const savedLanguage = localStorage.getItem("esurpys-language");
-    if (savedLanguage === "en" || savedLanguage === "ru") {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setLanguage(savedLanguage);
-    }
-  }, []);
-
-  function changeLanguage(nextLanguage: Language) {
-    setLanguage(nextLanguage);
-    localStorage.setItem("esurpys-language", nextLanguage);
-  }
 
   const query = search.trim().toLowerCase();
 
@@ -43,28 +32,7 @@ export default function CountriesPage() {
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
-      <header className="border-b border-slate-800">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-5">
-          <Link href="/" className="text-2xl font-bold tracking-tight">
-            Esur<span className="text-cyan-400">pys</span>
-          </Link>
-
-          <nav className="flex items-center gap-5 text-sm">
-            <Link href="/" className="text-slate-300 hover:text-cyan-300">
-              {language === "en" ? "Home" : "Главная"}
-            </Link>
-            <Link href="/about" className="text-slate-300 hover:text-cyan-300">
-              {language === "en" ? "About" : "О проекте"}
-            </Link>
-            <button
-              onClick={() => changeLanguage(language === "en" ? "ru" : "en")}
-              className="rounded-full border border-slate-700 px-4 py-2 font-semibold hover:border-cyan-400"
-            >
-              {language === "en" ? "RU" : "EN"}
-            </button>
-          </nav>
-        </div>
-      </header>
+      <EsurpysNavigation />
 
       <section className="mx-auto max-w-7xl px-6 py-16">
         <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-cyan-400">
@@ -84,9 +52,13 @@ export default function CountriesPage() {
         </p>
 
         <div className="mt-10 max-w-2xl">
-          <label htmlFor="country-search" className="mb-3 block text-sm font-medium text-slate-300">
+          <label
+            htmlFor="country-search"
+            className="mb-3 block text-sm font-medium text-slate-300"
+          >
             {language === "en" ? "Search countries" : "Поиск стран"}
           </label>
+
           <input
             id="country-search"
             type="search"
@@ -105,6 +77,7 @@ export default function CountriesPage() {
           <h2 className="text-2xl font-bold">
             {language === "en" ? "Countries" : "Страны"}
           </h2>
+
           <p className="text-sm text-slate-500">
             {filteredCountries.length}{" "}
             {language === "en" ? "countries" : "стран"}
@@ -119,11 +92,12 @@ export default function CountriesPage() {
                 className="flex flex-col rounded-3xl border border-slate-800 bg-slate-900/70 p-7 transition hover:-translate-y-1 hover:border-cyan-500/60"
               >
                 <div className="flex items-start justify-between gap-4">
-                 <CountryFlag
-                   code={country.flag as "US" | "DE" | "GB" | "CA" | "AU" | "NL"}
-                   name={country.name.en}
-                   className="h-10 w-14 rounded-md ring-1 ring-white/10"
-                 />
+                  <CountryFlag
+                    code={country.flag as "US" | "DE" | "GB" | "CA" | "AU" | "NL"}
+                    name={country.name.en}
+                    className="h-10 w-14 rounded-md ring-1 ring-white/10"
+                  />
+
                   <span className="rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-400">
                     {country.region[language]}
                   </span>
@@ -153,7 +127,9 @@ export default function CountriesPage() {
                   className="mt-7 inline-flex items-center justify-center rounded-full bg-cyan-400 px-5 py-3 font-semibold text-slate-950 transition hover:bg-cyan-300"
                 >
                   {language === "en" ? "Explore country" : "Изучить страну"}
-                  <span className="ml-2" aria-hidden="true">→</span>
+                  <span className="ml-2" aria-hidden="true">
+                    →
+                  </span>
                 </Link>
               </article>
             ))}

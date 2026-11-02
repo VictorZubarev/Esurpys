@@ -2,28 +2,16 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { countries, type Language } from "@/lib/countries";
+import { countries } from "@/lib/countries";
 import CountryFlag from "@/components/CountryFlag";
+import EsurpysNavigation from "@/shared/EsurpysNavigation";
+import { useLanguage } from "@/shared/LanguageProvider";
 
 export default function CountryDetailPage() {
   const params = useParams<{ slug: string }>();
   const slug = params.slug;
 
-  const [language, setLanguage] = useState<Language>("en");
-
-  useEffect(() => {
-    const savedLanguage = localStorage.getItem("esurpys-language");
-    if (savedLanguage === "en" || savedLanguage === "ru") {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setLanguage(savedLanguage);
-    }
-  }, []);
-
-  function changeLanguage(nextLanguage: Language) {
-    setLanguage(nextLanguage);
-    localStorage.setItem("esurpys-language", nextLanguage);
-  }
+  const { language } = useLanguage();
 
   const country = countries.find((item) => item.slug === slug);
 
@@ -47,28 +35,7 @@ export default function CountryDetailPage() {
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
-      <header className="border-b border-slate-800">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-5">
-          <Link href="/" className="text-2xl font-bold tracking-tight">
-            Esur<span className="text-cyan-400">pys</span>
-          </Link>
-
-          <nav className="flex items-center gap-5 text-sm">
-            <Link href="/countries" className="text-slate-300 hover:text-cyan-300">
-              {language === "en" ? "Countries" : "Страны"}
-            </Link>
-            <Link href="/about" className="text-slate-300 hover:text-cyan-300">
-              {language === "en" ? "About" : "О проекте"}
-            </Link>
-            <button
-              onClick={() => changeLanguage(language === "en" ? "ru" : "en")}
-              className="rounded-full border border-slate-700 px-4 py-2 font-semibold hover:border-cyan-400"
-            >
-              {language === "en" ? "RU" : "EN"}
-            </button>
-          </nav>
-        </div>
-      </header>
+      <EsurpysNavigation />
 
       <section className="mx-auto max-w-5xl px-6 py-14">
         <Link
@@ -84,13 +51,16 @@ export default function CountryDetailPage() {
             name={country.name.en}
             className="h-16 w-24 rounded-lg ring-1 ring-white/10"
           />
+
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-400">
               {country.region[language]}
             </p>
+
             <h1 className="mt-2 text-4xl font-bold sm:text-6xl">
               {country.name[language]}
             </h1>
+
             <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-400">
               {country.summary[language]}
             </p>
@@ -124,8 +94,13 @@ export default function CountryDetailPage() {
 
               <ul className="mt-6 space-y-3">
                 {section.points[language].map((point) => (
-                  <li key={point} className="flex gap-3 leading-7 text-slate-300">
-                    <span className="text-cyan-400" aria-hidden="true">✓</span>
+                  <li
+                    key={point}
+                    className="flex gap-3 leading-7 text-slate-300"
+                  >
+                    <span className="text-cyan-400" aria-hidden="true">
+                      ✓
+                    </span>
                     <span>{point}</span>
                   </li>
                 ))}
