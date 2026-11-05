@@ -66,7 +66,7 @@ export default function Header() {
             <Link
               key={item.href}
               href={item.href}
-              className="text-sm text-slate-300 transition hover:text-cyan-300"
+              className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm font-medium text-slate-300 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-cyan-400/50 hover:bg-cyan-400/10 hover:text-cyan-300 hover:shadow-lg hover:shadow-cyan-500/5 active:translate-y-0"
             >
               {t[item.key]}
             </Link>

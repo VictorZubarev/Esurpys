@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import EsurpysNavigation from "@/shared/EsurpysNavigation";
 import { useLanguage } from "@/shared/LanguageProvider";
+import CountryFlag from "@/components/CountryFlag";
 
 type Answers = Record<string, string>;
 
@@ -832,7 +833,13 @@ export default function USPage() {
 
       <section className="mx-auto max-w-6xl px-5 pb-12 pt-12">
         <div className="mb-10 rounded-3xl border border-blue-400/20 bg-gradient-to-br from-blue-950 via-slate-900 to-red-950 p-7 md:p-10">
-          <div className="mb-4 text-5xl">🇺🇸</div>
+          <div className="mb-4">
+  <CountryFlag
+    code="US"
+    name="United States"
+    className="h-12 w-18 rounded-md ring-1 ring-white/10"
+  />
+</div>
           <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-blue-300">
             {t("Иммиграционный навигатор", "Immigration navigator")}
           </p>
