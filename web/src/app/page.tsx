@@ -409,35 +409,6 @@ useEffect(() => {
         </div>
       </section>
 
-      <footer className="border-t border-white/10 bg-slate-900/30">
-        <div className="mx-auto max-w-7xl px-6 py-8">
-          <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
-            <Link href="/" className="text-xl font-bold tracking-tight">
-              Esurpys<span className="text-cyan-400">.</span>
-            </Link>
-
-            <nav className="flex flex-wrap gap-x-5 gap-y-3 text-sm text-slate-400">
-              {navigation.map((item) => (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  className="transition hover:text-cyan-300"
-                >
-                  {t[item.key]}
-                </a>
-              ))}
-            </nav>
-          </div>
-
-          <p className="mt-6 max-w-4xl text-xs leading-6 text-slate-500">
-            {t.disclaimer}
-          </p>
-
-          <p className="mt-4 text-xs text-slate-600">
-            © {new Date().getFullYear()} Esurpys. {t.footer}
-          </p>
-        </div>
-      </footer>
     </main>
   );
 }
