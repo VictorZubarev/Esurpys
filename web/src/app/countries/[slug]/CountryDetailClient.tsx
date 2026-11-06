@@ -118,10 +118,6 @@ export default function CountryDetailClient({
             : "Эта страница — ознакомительный материал, а не юридическая, иммиграционная, финансовая или профессиональная консультация. Требования могут меняться. Всегда проверяй актуальную информацию в официальных источниках."}
         </p>
       </section>
-
-      <footer className="border-t border-slate-800 px-6 py-8 text-center text-sm text-slate-500">
-        © 2026 Esurpys
-      </footer>
     </main>
   );
 }

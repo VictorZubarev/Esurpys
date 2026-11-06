@@ -8,9 +8,9 @@ import { useLanguage } from "@/shared/LanguageProvider";
 const translations = {
   en: {
     badge: "ESURPYS · TEST CENTER",
-    title: "Test Navigator",
-    description:
-      "Choose your destination and find the test that matches your goals. Explore international options or select a specific country.",
+title: "Visa Navigator",
+description:
+  "Answer a few questions to discover visa options and destinations that match your goals. Explore international opportunities or choose a specific country.",
     international: "International",
     internationalTests: "International Tests",
     global: "GLOBAL",
@@ -24,9 +24,9 @@ const translations = {
   },
   ru: {
     badge: "ESURPYS · ЦЕНТР ТЕСТИРОВАНИЯ",
-    title: "Навигатор тестов",
-    description:
-      "Выберите направление и найдите подходящий тест. Изучите международные варианты или выберите конкретную страну.",
+    title: "Визовый навигатор",
+description:
+  "Ответьте на несколько вопросов, чтобы подобрать подходящие варианты виз и стран. Изучите международные возможности или выберите конкретную страну.",
     international: "Международные тесты",
     internationalTests: "Международные тесты",
     global: "МИР",
