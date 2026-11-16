@@ -2,45 +2,67 @@
 
 ## Purpose
 
-This document records the planned development of Esurpys, including product milestones, platform expansion, research activities, and evaluation.
+This document outlines the planned development of Esurpys, including improvements to the Visa Navigator, user experience, platform reliability, documentation, and potential future research.
 
-## Phase 1: Web Platform
+The roadmap reflects development priorities that may evolve as the project grows and new requirements are identified.
 
-- [ ] Establish the project structure.
-- [ ] Develop the landing page.
-- [ ] Implement the content generator.
-- [ ] Build the results interface.
-- [ ] Test core functionality.
+## Phase 1: Core Web Platform
 
-## Phase 2: Product Validation
+- [x] Establish the initial web application structure.
+- [x] Develop the main website and navigation.
+- [x] Implement the test-based Visa Navigator experience.
+- [x] Deploy the website using Vercel.
+- [ ] Continue testing core functionality and user flows.
+- [ ] Identify and address usability issues.
 
-- [ ] Conduct usability testing.
-- [ ] Collect and evaluate user feedback.
-- [ ] Document technical improvements.
-- [ ] Record releases and significant milestones.
+## Phase 2: User Experience and Validation
 
-## Phase 3: Platform Expansion
+- [ ] Review the clarity of test questions and instructions.
+- [ ] Evaluate navigation and the presentation of results.
+- [ ] Collect and evaluate user feedback where available.
+- [ ] Assess accessibility and responsive behavior.
+- [ ] Document technical improvements and significant changes.
+- [ ] Record releases and development milestones.
 
-- [ ] Evaluate mobile application development.
-- [ ] Explore additional distribution channels.
-- [ ] Assess accessibility, performance, and reliability.
-- [ ] Measure actual product usage where data is available.
+## Phase 3: Platform Quality and Expansion
 
-## Phase 4: Research
+- [ ] Review application performance and reliability.
+- [ ] Improve error handling and maintainability.
+- [ ] Evaluate opportunities to expand country coverage.
+- [ ] Assess the need for additional languages.
+- [ ] Measure actual product usage when reliable data is available.
+- [ ] Evaluate mobile application development if justified by user needs.
 
-- [ ] Identify research questions relevant to the product.
-- [ ] Define appropriate research methods.
-- [ ] Collect data ethically and transparently.
-- [ ] Analyze findings and document limitations.
-- [ ] Consider publication opportunities when supported by substantive results.
+## Phase 4: Research and Evaluation
+
+- [ ] Identify research questions relevant to the Visa Navigator.
+- [ ] Define suitable evaluation methods and measurable criteria.
+- [ ] Conduct usability studies when appropriate resources are available.
+- [ ] Collect and analyze data responsibly and transparently.
+- [ ] Document findings, limitations, and potential sources of bias.
+- [ ] Consider publication opportunities if supported by substantive results.
+
+Research activities and publication opportunities are prospective. This roadmap does not claim that formal studies or scientific publications have been completed.
 
 ## Documentation Principles
 
-- Record completed work separately from planned work.
-- Keep dates and links to relevant commits, releases, and evidence.
-- Report metrics accurately and explain how they were measured.
-- Do not present plans as completed achievements.
+- Distinguish completed work from planned activities.
+- Maintain accurate dates and links to relevant commits, releases, and supporting evidence.
+- Report metrics only when reliable data is available and explain how they were measured.
+- Avoid presenting goals, proposals, or ongoing work as completed achievements.
+- Review this roadmap periodically and update it to reflect verified progress.
+- Keep visa-related information appropriately qualified and encourage users to verify requirements with official immigration authorities.
 
-## Status
+## Current Status
 
-This roadmap describes planned activities. Completion dates and priorities may change as development progresses.
+**Status:** Active Development.
+
+Esurpys is an evolving web project. Priorities, timelines, and planned features may change in response to testing, technical requirements, available resources, and user feedback.
+
+No completion dates are guaranteed by this roadmap.
+
+## Review and Updates
+
+This document should be updated as significant development milestones are completed, priorities change, or new initiatives are approved.
+
+Each update should accurately reflect the project's current state and distinguish implemented features from proposed improvements.

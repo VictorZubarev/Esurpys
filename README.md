@@ -1,79 +1,207 @@
 # Esurpys
 
-### An Independent Software Project for Content Creation and Digital Workflows
+### A Visa Navigator for Exploring Countries and Visa Opportunities
 
-> Building a simpler, more accessible way to create content.
+> Discover destinations and explore visa options based on your goals.
 
 ---
 
 ## About the Project
 
-**Esurpys** is an early-stage software project focused on simplifying content creation and improving digital workflows.
+**Esurpys** is an independent software project focused on helping people explore international destinations and discover visa options that may match their goals.
 
-The project begins with a web-based platform, with plans to explore mobile applications and additional distribution channels as development progresses.
+The platform includes a test-based Visa Navigator that guides users through questions and helps them explore relevant visa options and destinations. Users can also explore country-specific and international test sections.
+
+Esurpys aims to make the initial exploration of international opportunities more accessible through a simple, user-friendly web experience.
+
+**Important:** Esurpys provides informational guidance and is not a substitute for official immigration advice. Visa eligibility and requirements must always be verified through the relevant government or immigration authority.
 
 ## Vision and Goals
 
-- Make content creation more accessible.
-- Develop practical and efficient content-generation workflows.
-- Build a modern, user-friendly web platform.
-- Explore future mobile applications.
-- Investigate opportunities for research and evidence-based product improvement.
-- Grow through real-world testing, user feedback, and measurable results.
+- Make visa and destination exploration more accessible.
+- Help users identify potentially relevant visa options through a guided test.
+- Provide an intuitive interface for exploring countries and international opportunities.
+- Improve usability, clarity, and reliability based on user feedback.
+- Expand country coverage and platform capabilities as development progresses.
+- Build a transparent and maintainable software project.
+
+## Core Features
+
+- **Visa Navigator:** A test-based experience designed to help users explore visa options based on their answers and goals.
+- **Country Exploration:** Dedicated sections for exploring supported countries.
+- **International Tests:** An area for exploring international options beyond individual country sections.
+- **Multilingual Interface:** English and Russian interface content.
+- **Responsive Web Experience:** A web interface designed for convenient access across supported screen sizes.
+
+Feature availability and coverage may evolve as the project develops.
+
+## Technology Stack
+
+- **Next.js** — web application framework.
+- **React** — user interface library.
+- **TypeScript** — typed application development.
+- **Vercel** — deployment and hosting.
+- **GitHub** — source code and project collaboration.
+
+The web application is located in the `web/` directory.
+
+## Getting Started
+
+### Prerequisites
+
+Make sure you have the following installed:
+
+- Node.js, compatible with the project configuration.
+- npm.
+- Git.
+
+### Installation
+
+Clone the repository:
+
+```bash
+git clone https://github.com/VictorZubarev/Esurpys.git
+cd Esurpys
+```
+
+Navigate to the web application directory:
+
+```bash
+cd web
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+Open the local URL shown in the terminal, usually:
+
+```text
+http://localhost:3000
+```
+
+### Production Build
+
+From the `web/` directory, run:
+
+```bash
+npm run build
+```
+
+To run the production build locally, if supported by the project's scripts:
+
+```bash
+npm run start
+```
+
+## Project Structure
+
+The repository contains the web application and project-level files.
+
+```text
+Esurpys/
+├── web/
+│   ├── src/
+│   │   ├── app/          # Application pages and routes
+│   │   ├── components/   # Reusable UI components
+│   │   └── shared/       # Shared navigation and application logic
+│   ├── public/           # Static assets, if present
+│   ├── package.json      # Web application scripts and dependencies
+│   └── ...
+├── docs/                 # Project documentation, if present
+├── README.md
+├── CONTRIBUTING.md
+└── SECURITY.md
+```
+
+The exact contents may change as the project evolves.
+
+## Deployment
+
+Esurpys is deployed using Vercel.
+
+The web application resides in `web/`, which should be configured as the Vercel project's Root Directory when deploying this repository.
+
+For deployments connected to GitHub, pushing changes to the configured branch can trigger an automatic deployment, depending on the Vercel project settings.
+
+Before deploying, verify that the production build completes successfully.
 
 ## Development Roadmap
 
-### Phase 1 — Web Platform
+### Phase 1 — Core Web Experience
 
-- [ ] Establish the project foundation.
-- [ ] Develop the landing page.
-- [ ] Build the content generator.
-- [ ] Create the results interface.
+- [x] Establish the web application foundation.
+- [x] Implement the initial site navigation and main sections.
+- [x] Develop the test-based Visa Navigator experience.
+- [x] Publish an initial deployment.
+- [ ] Continue testing the user experience.
 
-### Phase 2 — Product Development
+### Phase 2 — Quality and Documentation
 
-- [ ] Improve usability and reliability.
-- [ ] Test core functionality.
-- [ ] Document technical decisions and releases.
-- [ ] Gather initial user feedback.
+- [ ] Improve usability and accessibility.
+- [ ] Review and refine visa-related content.
+- [ ] Maintain accurate technical documentation.
+- [ ] Improve testing and error handling.
+- [ ] Gather and evaluate user feedback.
 
-### Phase 3 — Cross-Platform Expansion
+### Phase 3 — Growth and Expansion
 
-- [ ] Evaluate mobile application development.
-- [ ] Explore additional distribution platforms.
-- [ ] Measure adoption and user engagement.
+- [ ] Evaluate demand for additional countries and destinations.
+- [ ] Improve discoverability through search engines.
+- [ ] Explore responsible promotion and community outreach.
+- [ ] Evaluate additional languages and platform capabilities.
+- [ ] Consider mobile applications if justified by user needs.
 
-### Phase 4 — Research and Evaluation
-
-- [ ] Identify meaningful research questions.
-- [ ] Develop appropriate testing methodologies.
-- [ ] Analyze results using reliable evidence.
-- [ ] Explore scientific publication opportunities where justified by original research.
+Roadmap items may change based on development priorities, feasibility, and user feedback.
 
 ## Project Documentation
 
-Technical documentation, development milestones, research plans, and release notes will be added as the project evolves.
+Additional documentation is maintained in the repository as the project develops.
 
-## Current Status
+- `CONTRIBUTING.md` — contribution guidelines.
+- `SECURITY.md` — security reporting guidance.
+- `docs/` — supplementary technical and project documentation, where available.
 
-**Status:** Early Development
+## Contributing
 
-Esurpys is in its early development stage. Features, timelines, and future directions may evolve based on testing, research, and user feedback.
+Ideas, constructive feedback, bug reports, and technical suggestions are welcome.
 
-## Development and Authorship
+Please review [`CONTRIBUTING.md`](CONTRIBUTING.md) before submitting changes. Use GitHub Issues to report bugs, suggest improvements, or discuss potential features.
 
-The project's Git history will provide a record of code changes and development milestones. Contributions and achievements will be documented accurately as they occur.
+## Security
 
-## Collaboration
+If you discover a potential security vulnerability, please follow the reporting instructions in [`SECURITY.md`](SECURITY.md).
 
-Ideas, constructive feedback, and technical suggestions are welcome through GitHub Issues.
+Avoid publishing sensitive information, credentials, or details that could expose users or compromise the application.
+
+## Project Status
+
+**Status:** Active Development
+
+Esurpys is an evolving independent software project. Features, country coverage, documentation, and future plans may change as the application is tested and improved.
+
+Visa information and eligibility can change. Users should verify current requirements with official government and immigration sources before making travel or immigration decisions.
+
+## Authorship and License
+
+Esurpys is developed as an independent software project. The repository's Git history records changes to the codebase over time.
+
+No open-source license is implied unless a license file is explicitly included in the repository. Check the repository's `LICENSE` file, if present, for the applicable terms.
 
 ## Contact
 
-For questions or project-related discussions, please open an issue in this repository.
+For general questions, bug reports, feature suggestions, and project discussions, open an issue in the [Esurpys GitHub repository](https://github.com/VictorZubarev/Esurpys).
 
 ---
 
 ### Building Esurpys Step by Step
 
-*Our focus is on developing a useful product, validating ideas through real-world evidence, and improving the platform over time.*
+*Our goal is to make exploring international opportunities clearer and more accessible through practical tools, continuous improvement, and user feedback.*

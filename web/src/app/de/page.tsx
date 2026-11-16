@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import EsurpysNavigation from "@/shared/EsurpysNavigation";
 import { useLanguage } from "@/shared/LanguageProvider";
 import CountryFlag from "@/components/CountryFlag";
@@ -10,1460 +10,1512 @@ type Answers = Record<string, string>;
 
 type Option = {
   value: string;
-  ru: string;
-  en: string;
+  label: string;
+  en?: string;
 };
 
 type Question = {
   id: string;
-  ru: string;
+  title: string;
   en: string;
+  description?: string;
+  descriptionEn?: string;
   options: Option[];
 };
 
 type Route = {
   id: string;
-  emoji: string;
   title: string;
-  enTitle: string;
-  visa: string;
-  desc: string;
-  enDesc: string;
-  link: string;
-  requirements: string;
-  enRequirements: string;
-  goals: string[];
+  titleEn: string;
+  category: string;
+  categoryEn: string;
+  description: string;
+  descriptionEn: string;
+  requirements: string[];
+  requirementsEn: string[];
+  limitations: string[];
+  limitationsEn: string[];
+  officialUrl: string;
+  score: number;
 };
 
+const opt = (value: string, label: string, en: string): Option => ({
+  value,
+  label,
+  en,
+});
+
 const citizenshipOptions: Option[] = [
-  { value: "ru", ru: "🇷🇺 Россия", en: "🇷🇺 Russia" },
-  { value: "ua", ru: "🇺🇦 Украина", en: "🇺🇦 Ukraine" },
-  { value: "by", ru: "🇧🇾 Беларусь", en: "🇧🇾 Belarus" },
-  { value: "kz", ru: "🇰🇿 Казахстан", en: "🇰🇿 Kazakhstan" },
-  { value: "uz", ru: "🇺🇿 Узбекистан", en: "🇺🇿 Uzbekistan" },
-  { value: "am", ru: "🇦🇲 Армения", en: "🇦🇲 Armenia" },
-  { value: "ge", ru: "🇬🇪 Грузия", en: "🇬🇪 Georgia" },
-  { value: "us", ru: "🇺🇸 США", en: "🇺🇸 United States" },
-  { value: "ca", ru: "🇨🇦 Канада", en: "🇨🇦 Canada" },
-  { value: "uk", ru: "🇬🇧 Великобритания", en: "🇬🇧 United Kingdom" },
-  { value: "in", ru: "🇮🇳 Индия", en: "🇮🇳 India" },
-  { value: "cn", ru: "🇨🇳 Китай", en: "🇨🇳 China" },
-  { value: "tr", ru: "🇹🇷 Турция", en: "🇹🇷 Türkiye" },
-  { value: "de", ru: "🇩🇪 Германия", en: "🇩🇪 Germany" },
-  { value: "fr", ru: "🇫🇷 Франция", en: "🇫🇷 France" },
-  { value: "it", ru: "🇮🇹 Италия", en: "🇮🇹 Italy" },
-  { value: "es", ru: "🇪🇸 Испания", en: "🇪🇸 Spain" },
-  { value: "pl", ru: "🇵🇱 Польша", en: "🇵🇱 Poland" },
-  { value: "otherEU", ru: "Другая страна ЕС / ЕЭЗ", en: "Another EU / EEA country" },
-  { value: "other", ru: "Другая страна", en: "Another country" },
-  { value: "unknown", ru: "Не хочу указывать", en: "Prefer not to say" },
+  opt("ru", "Россия", "Russia"),
+  opt("ua", "Украина", "Ukraine"),
+  opt("by", "Беларусь", "Belarus"),
+  opt("kz", "Казахстан", "Kazakhstan"),
+  opt("uz", "Узбекистан", "Uzbekistan"),
+  opt("am", "Армения", "Armenia"),
+  opt("ge", "Грузия", "Georgia"),
+  opt("in", "Индия", "India"),
+  opt("cn", "Китай", "China"),
+  opt("ph", "Филиппины", "Philippines"),
+  opt("br", "Бразилия", "Brazil"),
+  opt("mx", "Мексика", "Mexico"),
+  opt("au", "Австралия", "Australia"),
+  opt("nz", "Новая Зеландия", "New Zealand"),
+  opt("jp", "Япония", "Japan"),
+  opt("kr", "Южная Корея", "South Korea"),
+  opt("ca", "Канада", "Canada"),
+  opt("us", "США", "United States"),
+  opt("gb", "Великобритания", "United Kingdom"),
+  opt("de", "Германия", "Germany"),
+  opt("fr", "Франция", "France"),
+  opt("other", "Другое гражданство", "Other citizenship"),
+  opt("unknown", "Не уверен(а)", "Not sure"),
 ];
 
 const questions: Question[] = [
   {
     id: "goal",
-    ru: "Какова ваша главная цель в Германии?",
+    title: "Какова ваша главная цель в Германии?",
     en: "What is your main goal in Germany?",
+    description: "Выберите основную цель предполагаемого пребывания.",
+    descriptionEn: "Select the main purpose of your intended stay.",
     options: [
-      { value: "work", ru: "Работа по найму", en: "Employment" },
-      { value: "study", ru: "Учёба в университете", en: "University studies" },
-      { value: "business", ru: "Бизнес или самозанятость", en: "Business or self-employment" },
-      { value: "family", ru: "Переезд к семье или партнёру", en: "Join family or partner" },
-      { value: "permanent", ru: "Долгосрочное или постоянное проживание", en: "Long-term or permanent residence" },
-      { value: "visit", ru: "Туризм, гости или деловая поездка", en: "Tourism, visiting or business trip" },
-      { value: "exchange", ru: "Профессиональное обучение или стажировка", en: "Vocational training or internship" },
-      { value: "research", ru: "Научная работа или исследования", en: "Academic work or research" },
-      { value: "protection", ru: "Поиск защиты от преследования или опасности", en: "Seeking protection from persecution or danger" },
-      { value: "unsure", ru: "Пока не определился(-ась)", en: "Not sure yet" },
+      opt("work", "Работа по найму", "Employment"),
+      opt("bluecard", "EU Blue Card для квалифицированного специалиста", "EU Blue Card for highly qualified employment"),
+      opt("jobsearch", "Поиск работы без предложения работодателя", "Job search without a job offer"),
+      opt("study", "Учёба в университете", "University studies"),
+      opt("ausbildung", "Профессиональное обучение Ausbildung", "Vocational training (Ausbildung)"),
+      opt("family", "Воссоединение семьи", "Family reunification"),
+      opt("business", "Собственный бизнес или фриланс", "Self-employment or freelancing"),
+      opt("visit", "Туризм или краткосрочный визит", "Tourism or short visit"),
+      opt("permanent", "Постоянное проживание", "Permanent residence"),
+      opt("citizenship", "Получение немецкого гражданства", "German citizenship"),
+      opt("protection", "Убежище или гуманитарная защита", "Asylum or humanitarian protection"),
+      opt("recognition", "Признание квалификации", "Recognition of qualifications"),
+      opt("unsure", "Пока не определился", "Not sure yet"),
     ],
   },
   {
     id: "citizenship",
-    ru: "Какое у вас гражданство по паспорту, с которым планируете поездку?",
-    en: "What is the nationality of the passport you plan to travel with?",
+    title: "Какое у вас гражданство?",
+    en: "What is your citizenship?",
+    description: "Граждане ЕС/ЕЭЗ и Швейцарии пользуются другими правилами передвижения и проживания.",
+    descriptionEn: "EU/EEA and Swiss citizens benefit from different residence and mobility rules.",
     options: citizenshipOptions,
   },
   {
-    id: "birthCountry",
-    ru: "В какой стране вы родились?",
-    en: "Which country were you born in?",
-    options: [
-      { value: "ru", ru: "Россия", en: "Russia" },
-      { value: "ua", ru: "Украина", en: "Ukraine" },
-      { value: "by", ru: "Беларусь", en: "Belarus" },
-      { value: "kz", ru: "Казахстан", en: "Kazakhstan" },
-      { value: "uz", ru: "Узбекистан", en: "Uzbekistan" },
-      { value: "in", ru: "Индия", en: "India" },
-      { value: "cn", ru: "Китай", en: "China" },
-      { value: "de", ru: "Германия", en: "Germany" },
-      { value: "other", ru: "Другая страна", en: "Another country" },
-      { value: "unknown", ru: "Не хочу указывать", en: "Prefer not to say" },
-    ],
-  },
-  {
     id: "age",
-    ru: "Сколько вам лет?",
+    title: "Сколько вам лет?",
     en: "How old are you?",
     options: [
-      { value: "under18", ru: "Младше 18 лет", en: "Under 18" },
-      { value: "18-24", ru: "18–24 года", en: "18–24" },
-      { value: "25-29", ru: "25–29 лет", en: "25–29" },
-      { value: "30-35", ru: "30–35 лет", en: "30–35" },
-      { value: "36-49", ru: "36–49 лет", en: "36–49" },
-      { value: "50plus", ru: "50 лет и старше", en: "50 or older" },
-      { value: "unknown", ru: "Не хочу указывать", en: "Prefer not to say" },
+      opt("under18", "Младше 18 лет", "Under 18"),
+      opt("18-29", "18–29 лет", "18–29"),
+      opt("30-34", "30–34 года", "30–34"),
+      opt("35-44", "35–44 года", "35–44"),
+      opt("45plus", "45 лет и старше", "45 or older"),
     ],
   },
   {
     id: "residence",
-    ru: "В какой стране вы сейчас живёте?",
-    en: "Which country do you currently live in?",
+    title: "Где вы сейчас проживаете?",
+    en: "Where do you currently live?",
     options: [
-      { value: "ru", ru: "Россия", en: "Russia" },
-      { value: "ua", ru: "Украина", en: "Ukraine" },
-      { value: "by", ru: "Беларусь", en: "Belarus" },
-      { value: "kz", ru: "Казахстан", en: "Kazakhstan" },
-      { value: "de", ru: "Германия", en: "Germany" },
-      { value: "pl", ru: "Польша", en: "Poland" },
-      { value: "cz", ru: "Чехия", en: "Czechia" },
-      { value: "uk", ru: "Великобритания", en: "United Kingdom" },
-      { value: "otherEU", ru: "Другая страна ЕС / ЕЭЗ", en: "Another EU / EEA country" },
-      { value: "us", ru: "США", en: "United States" },
-      { value: "other", ru: "Другая страна", en: "Another country" },
-      { value: "unknown", ru: "Не хочу указывать", en: "Prefer not to say" },
+      opt("outside", "За пределами Германии", "Outside Germany"),
+      opt("germany", "В Германии на законных основаниях", "In Germany with lawful status"),
+      opt("eu", "В другой стране ЕС/ЕЭЗ или Швейцарии", "In another EU/EEA country or Switzerland"),
+      opt("uncertain", "Статус проживания неясен", "Residence status is uncertain"),
+    ],
+  },
+  {
+    id: "german",
+    title: "Какой у вас уровень немецкого языка?",
+    en: "What is your German language level?",
+    description: "Требуемый уровень зависит от визового маршрута, профессии и программы.",
+    descriptionEn: "The required level depends on the immigration route, profession and programme.",
+    options: [
+      opt("none", "Нет подтверждённого уровня", "No certified level"),
+      opt("a1", "A1 — начальный", "A1 — beginner"),
+      opt("a2", "A2 — базовый", "A2 — elementary"),
+      opt("b1", "B1 — средний", "B1 — intermediate"),
+      opt("b2", "B2 — выше среднего", "B2 — upper intermediate"),
+      opt("c1", "C1 или выше", "C1 or higher"),
     ],
   },
   {
     id: "english",
-    ru: "Какой у вас уровень английского?",
-    en: "What is your English level?",
+    title: "Какой у вас уровень английского?",
+    en: "What is your English language level?",
     options: [
-      { value: "basic", ru: "Начальный", en: "Basic" },
-      { value: "intermediate", ru: "Средний", en: "Intermediate" },
-      { value: "advanced", ru: "Продвинутый", en: "Advanced" },
-      { value: "native", ru: "Свободный / родной", en: "Fluent / native" },
-      { value: "unknown", ru: "Пока не знаю", en: "Not sure" },
+      opt("none", "Не владею или начальный", "None or beginner"),
+      opt("basic", "Базовый", "Basic"),
+      opt("b1", "B1", "B1"),
+      opt("b2", "B2", "B2"),
+      opt("c1", "C1 или выше", "C1 or higher"),
     ],
   },
   {
     id: "education",
-    ru: "Какое у вас образование?",
-    en: "What is your education?",
+    title: "Какое у вас образование или профессиональная квалификация?",
+    en: "What education or professional qualification do you have?",
     options: [
-      { value: "school", ru: "Среднее образование", en: "High school" },
-      { value: "bachelor", ru: "Бакалавриат / специалист", en: "Bachelor's degree" },
-      { value: "master", ru: "Магистратура или выше", en: "Master's degree or higher" },
-      { value: "vocational", ru: "Профессиональное образование", en: "Vocational qualification" },
-      { value: "none", ru: "Нет законченного образования", en: "No completed qualification" },
+      opt("none", "Нет завершённого профессионального образования", "No completed professional qualification"),
+      opt("school", "Среднее образование", "Secondary education"),
+      opt("vocational", "Профессиональное образование / диплом колледжа", "Vocational qualification"),
+      opt("bachelor", "Степень бакалавра или эквивалент", "Bachelor's degree or equivalent"),
+      opt("master", "Магистратура или выше", "Master's degree or higher"),
+      opt("regulated", "Квалификация в регулируемой профессии", "Qualification in a regulated profession"),
     ],
   },
   {
     id: "workExperience",
-    ru: "Какой у вас профессиональный опыт?",
-    en: "What is your professional experience?",
+    title: "Каков ваш профессиональный опыт?",
+    en: "How much professional experience do you have?",
     options: [
-      { value: "none", ru: "Нет значимого опыта", en: "No significant experience" },
-      { value: "under3", ru: "Менее 3 лет", en: "Less than 3 years" },
-      { value: "3plus", ru: "3 года и более", en: "3 years or more" },
-      { value: "specialist", ru: "Высококвалифицированная специальность", en: "Highly specialized occupation" },
-      { value: "manager", ru: "Руководитель или менеджер", en: "Executive or manager" },
-      { value: "research", ru: "Научная или исследовательская деятельность", en: "Academic or research experience" },
+      opt("none", "Нет опыта", "No experience"),
+      opt("under2", "Менее 2 лет", "Less than 2 years"),
+      opt("2-5", "2–5 лет", "2–5 years"),
+      opt("5plus", "Более 5 лет", "More than 5 years"),
+    ],
+  },
+  {
+    id: "germanyExperience",
+    title: "Есть ли у вас опыт работы или обучения в Германии?",
+    en: "Do you have work or study experience in Germany?",
+    options: [
+      opt("yes", "Да", "Yes"),
+      opt("no", "Нет", "No"),
+      opt("current", "Сейчас работаю или учусь в Германии", "Currently working or studying in Germany"),
     ],
   },
   {
     id: "jobOffer",
-    ru: "Есть ли у вас предложение работы от работодателя в Германии?",
-    en: "Do you have a job offer from an employer in Germany?",
+    title: "Есть ли у вас предложение работы от немецкого работодателя?",
+    en: "Do you have a job offer from a German employer?",
     options: [
-      { value: "yes", ru: "Да", en: "Yes" },
-      { value: "no", ru: "Нет", en: "No" },
-      { value: "maybe", ru: "Веду переговоры", en: "In discussion" },
+      opt("yes", "Да, есть конкретное предложение или договор", "Yes, I have a concrete offer or contract"),
+      opt("interview", "Есть переговоры или собеседования", "I have interviews or ongoing discussions"),
+      opt("no", "Нет", "No"),
+      opt("self", "Планирую работать на себя", "I plan to be self-employed"),
     ],
   },
   {
-    id: "sponsor",
-    ru: "Готов ли работодатель оформить документы для трудоустройства иностранца?",
-    en: "Is the employer willing to support the required immigration paperwork?",
+    id: "profession",
+    title: "В какой сфере вы планируете работать?",
+    en: "In which field do you plan to work?",
     options: [
-      { value: "yes", ru: "Да", en: "Yes" },
-      { value: "no", ru: "Нет", en: "No" },
-      { value: "unknown", ru: "Не знаю", en: "Not sure" },
-      { value: "na", ru: "Нет предложения работы", en: "No job offer" },
+      opt("it", "IT, технологии или цифровые профессии", "IT, technology or digital professions"),
+      opt("engineering", "Инженерия или технические специальности", "Engineering or technical occupations"),
+      opt("health", "Медицина или уход", "Healthcare or nursing"),
+      opt("craft", "Ремесло, производство или строительство", "Trades, manufacturing or construction"),
+      opt("business", "Бизнес, финансы или управление", "Business, finance or management"),
+      opt("education", "Образование или наука", "Education or research"),
+      opt("other", "Другая сфера", "Other field"),
+      opt("none", "Пока не планирую работать", "I do not plan to work yet"),
     ],
   },
   {
-    id: "studentOffer",
-    ru: "Есть ли у вас зачисление или приглашение от учебного заведения Германии?",
-    en: "Have you been admitted to an educational institution in Germany?",
+    id: "recognition",
+    title: "Как обстоят дела с признанием вашей квалификации в Германии?",
+    en: "What is the status of recognition of your qualifications in Germany?",
+    description: "Для некоторых профессий признание диплома или лицензия обязательны.",
+    descriptionEn: "Recognition of qualifications or a licence is mandatory for some professions.",
     options: [
-      { value: "yes", ru: "Да", en: "Yes" },
-      { value: "no", ru: "Нет", en: "No" },
-      { value: "applying", ru: "Планирую подать документы", en: "Planning to apply" },
+      opt("recognized", "Квалификация признана или сопоставима", "Recognised or comparable"),
+      opt("pending", "Процесс признания начат", "Recognition process has started"),
+      opt("notstarted", "Ещё не обращался за признанием", "Not yet applied for recognition"),
+      opt("notneeded", "Для моей профессии признание не требуется", "Recognition is not required for my occupation"),
+      opt("unknown", "Не знаю", "Not sure"),
     ],
   },
   {
-    id: "exchangeOffer",
-    ru: "Есть ли у вас место на программе Ausbildung, стажировке или профессиональном обучении?",
-    en: "Do you have a place in an Ausbildung, internship or vocational training programme?",
+    id: "state",
+    title: "В какой федеральной земле Германии вы планируете жить?",
+    en: "In which German federal state do you plan to live?",
     options: [
-      { value: "yes", ru: "Да", en: "Yes" },
-      { value: "no", ru: "Нет", en: "No" },
-      { value: "unknown", ru: "Не знаю", en: "Not sure" },
+      opt("berlin", "Берлин", "Berlin"),
+      opt("bavaria", "Бавария", "Bavaria"),
+      opt("baden", "Баден-Вюртемберг", "Baden-Württemberg"),
+      opt("nrw", "Северный Рейн — Вестфалия", "North Rhine-Westphalia"),
+      opt("hesse", "Гессен", "Hesse"),
+      opt("hamburg", "Гамбург", "Hamburg"),
+      opt("other", "Другая земля", "Another state"),
+      opt("unknown", "Пока не знаю", "Not decided yet"),
     ],
   },
   {
-    id: "familyUS",
-    ru: "Есть ли у вас супруг(-а), зарегистрированный партнёр или близкий родственник в Германии?",
-    en: "Do you have a spouse, registered partner or close relative in Germany?",
+    id: "studyOffer",
+    title: "Есть ли у вас подтверждение о зачислении в немецкое учебное заведение?",
+    en: "Have you been admitted to a German educational institution?",
     options: [
-      { value: "citizen", ru: "Супруг(-а) или партнёр — гражданин Германии", en: "Spouse or partner is a German citizen" },
-      { value: "resident", ru: "Супруг(-а) или родственник легально проживает в Германии", en: "Spouse or relative legally resides in Germany" },
-      { value: "fiance", ru: "Планирую заключить брак с гражданином Германии", en: "I plan to marry a German citizen" },
-      { value: "no", ru: "Нет", en: "No" },
-      { value: "unknown", ru: "Не уверен(-а)", en: "Not sure" },
+      opt("yes", "Да, университет или вуз подтвердил зачисление", "Yes, a university has admitted me"),
+      opt("conditional", "Есть условное зачисление или подготовительная программа", "Conditional admission or preparatory programme"),
+      opt("training", "Есть предложение места Ausbildung", "I have an Ausbildung offer"),
+      opt("no", "Нет", "No"),
+      opt("planning", "Пока выбираю программу", "I am still choosing a programme"),
     ],
   },
   {
-    id: "achievements",
-    ru: "Есть ли у вас значимые профессиональные или научные достижения?",
-    en: "Do you have significant professional or academic achievements?",
+    id: "institution",
+    title: "Проверяли ли вы требования к учебному заведению и вашему аттестату?",
+    en: "Have you checked the institution and school-leaving qualification requirements?",
     options: [
-      { value: "strong", ru: "Да: признание, публикации, награды или значимые достижения", en: "Yes: recognition, publications, awards or significant achievements" },
-      { value: "some", ru: "Есть достижения, но не знаю, подходят ли они", en: "Some achievements, but unsure if they qualify" },
-      { value: "no", ru: "Нет", en: "No" },
+      opt("yes", "Да, требования проверены", "Yes, I have checked the requirements"),
+      opt("partial", "Проверил частично", "Partially checked"),
+      opt("no", "Нет", "No"),
+      opt("na", "Не относится к моей ситуации", "Not applicable to me"),
     ],
   },
   {
-    id: "business",
-    ru: "Каковы ваши планы в отношении бизнеса или самозанятости?",
-    en: "What are your plans for business or self-employment?",
+    id: "family",
+    title: "Есть ли у вас близкий родственник, проживающий в Германии?",
+    en: "Do you have a close family member living in Germany?",
+    description: "Возможность воссоединения зависит от родства и статуса родственника.",
+    descriptionEn: "Family reunification depends on the relationship and the relative's residence status.",
     options: [
-      { value: "large", ru: "Есть капитал и подробный бизнес-план", en: "I have capital and a detailed business plan" },
-      { value: "some", ru: "Есть идея или предварительный бизнес-план", en: "I have an idea or an initial business plan" },
-      { value: "company", ru: "У меня есть действующая компания", en: "I own or operate an existing company" },
-      { value: "no", ru: "Не планирую бизнес", en: "No business plans" },
+      opt("spouse", "Супруг или зарегистрированный партнёр", "Spouse or registered partner"),
+      opt("child", "Несовершеннолетний ребёнок", "Minor child"),
+      opt("parent", "Родитель ребёнка, проживающего в Германии", "Parent of a child living in Germany"),
+      opt("other", "Другой родственник", "Another relative"),
+      opt("no", "Нет", "No"),
     ],
   },
   {
-    id: "visitPurpose",
-    ru: "Что вы планируете делать во время краткой поездки?",
-    en: "What do you plan to do during a short visit?",
+    id: "familyStatus",
+    title: "Каков статус родственника в Германии?",
+    en: "What is your relative's status in Germany?",
     options: [
-      { value: "tourism", ru: "Туризм, отдых, посещение друзей или семьи", en: "Tourism, vacation, visiting friends or family" },
-      { value: "business", ru: "Деловые встречи или конференция", en: "Business meetings or a conference" },
-      { value: "medical", ru: "Получение медицинской помощи", en: "Medical treatment" },
-      { value: "transit", ru: "Транзит через Германию", en: "Transit through Germany" },
-      { value: "other", ru: "Другая цель", en: "Another purpose" },
-    ],
-  },
-  {
-    id: "visitDuration",
-    ru: "Как долго планируете находиться в Германии?",
-    en: "How long do you plan to stay in Germany?",
-    options: [
-      { value: "under90", ru: "До 90 дней", en: "Up to 90 days" },
-      { value: "over90", ru: "Более 90 дней", en: "More than 90 days" },
-      { value: "unsure", ru: "Пока не знаю", en: "Not sure yet" },
-    ],
-  },
-  {
-    id: "passport",
-    ru: "Есть ли у вас действующий заграничный паспорт?",
-    en: "Do you have a valid travel passport?",
-    options: [
-      { value: "yes", ru: "Да", en: "Yes" },
-      { value: "no", ru: "Нет", en: "No" },
-      { value: "unknown", ru: "Не уверен(-а)", en: "Not sure" },
-    ],
-  },
-  {
-    id: "vwpRestrictions",
-    ru: "Есть ли обстоятельства, которые могут повлиять на получение визы или въезд?",
-    en: "Are there circumstances that may affect visa issuance or entry?",
-    options: [
-      { value: "none", ru: "Насколько мне известно, нет", en: "Not to my knowledge" },
-      { value: "restrictedTravel", ru: "Есть сложная история поездок или документов", en: "I have a complicated travel or document history" },
-      { value: "dualNationality", ru: "У меня несколько гражданств или паспортов", en: "I hold multiple nationalities or passports" },
-      { value: "denied", ru: "Ранее был отказ в визе или во въезде", en: "I have had a visa or entry refusal" },
-      { value: "unknown", ru: "Не уверен(-а)", en: "Not sure" },
+      opt("citizen", "Гражданин Германии", "German citizen"),
+      opt("eu", "Гражданин другой страны ЕС/ЕЭЗ", "Citizen of another EU/EEA country"),
+      opt("permanent", "Постоянный вид на жительство", "Permanent residence permit"),
+      opt("work", "Временный ВНЖ для работы", "Temporary work residence permit"),
+      opt("study", "ВНЖ для учёбы", "Student residence permit"),
+      opt("protection", "Статус защиты или убежища", "Protection or asylum status"),
+      opt("unknown", "Не знаю", "Not sure"),
+      opt("na", "Нет родственника в Германии", "No relative in Germany"),
     ],
   },
   {
     id: "funds",
-    ru: "Можете ли вы подтвердить средства на проживание, поездку или учёбу?",
-    en: "Can you demonstrate sufficient funds for living costs, travel or study?",
+    title: "Можете ли вы подтвердить наличие средств на проживание?",
+    en: "Can you prove that you have sufficient funds for living expenses?",
+    description: "Способы подтверждения зависят от типа визы: например, блокированный счёт, стипендия или обязательство спонсора.",
+    descriptionEn: "Accepted proof depends on the visa type and may include a blocked account, scholarship or formal sponsorship.",
     options: [
-      { value: "yes", ru: "Да", en: "Yes" },
-      { value: "sponsor", ru: "Есть финансовый спонсор или стипендия", en: "I have a financial sponsor or scholarship" },
-      { value: "no", ru: "Пока нет", en: "Not yet" },
+      opt("yes", "Да, средства или подтверждение финансирования есть", "Yes, funds or financial proof are available"),
+      opt("partial", "Есть часть средств", "I have some funds"),
+      opt("sponsor", "Есть спонсор или стипендия", "I have a sponsor or scholarship"),
+      opt("no", "Пока нет", "Not yet"),
+      opt("unknown", "Не знаю, сколько требуется", "I do not know the required amount"),
+    ],
+  },
+  {
+    id: "business",
+    title: "Планируете ли вы открыть бизнес или работать как фрилансер?",
+    en: "Do you plan to start a business or work as a freelancer?",
+    options: [
+      opt("business", "Открыть компанию или коммерческий бизнес", "Start a company or commercial business"),
+      opt("freelance", "Работать как фрилансер", "Work as a freelancer"),
+      opt("existing", "У меня уже есть бизнес", "I already have a business"),
+      opt("no", "Нет", "No"),
+      opt("considering", "Рассматриваю такую возможность", "I am considering it"),
+    ],
+  },
+  {
+    id: "visitDuration",
+    title: "Как долго вы планируете находиться в Германии?",
+    en: "How long do you plan to stay in Germany?",
+    options: [
+      opt("short", "До 90 дней", "Up to 90 days"),
+      opt("long", "Более 90 дней", "More than 90 days"),
+      opt("permanent", "Переезд на постоянной основе", "Long-term relocation"),
+      opt("unknown", "Пока не знаю", "Not sure yet"),
+    ],
+  },
+  {
+    id: "passport",
+    title: "Есть ли у вас действующий паспорт?",
+    en: "Do you have a valid passport?",
+    options: [
+      opt("yes", "Да", "Yes"),
+      opt("expiring", "Скоро истекает срок действия", "It expires soon"),
+      opt("no", "Нет", "No"),
+      opt("refugee", "У меня особые документы или документ беженца", "I have special travel documents or a refugee travel document"),
     ],
   },
   {
     id: "immigrationHistory",
-    ru: "Были ли отказы в визах, нарушения правил пребывания или выдворение?",
-    en: "Have you had visa refusals, residence violations or removal?",
+    title: "Были ли у вас отказы в визе, нарушения или проблемы с миграционным статусом?",
+    en: "Have you had visa refusals, violations or immigration status issues?",
     options: [
-      { value: "none", ru: "Нет", en: "No" },
-      { value: "refusal", ru: "Был отказ в визе", en: "Visa refusal" },
-      { value: "overstay", ru: "Превышение срока пребывания или нарушение условий", en: "Overstay or violation of conditions" },
-      { value: "removed", ru: "Депортация или выдворение", en: "Deportation or removal" },
-      { value: "unknown", ru: "Не уверен(-а) / не хочу указывать", en: "Not sure / prefer not to say" },
+      opt("no", "Нет", "No"),
+      opt("refusal", "Был отказ в визе или ВНЖ", "I had a visa or residence permit refusal"),
+      opt("overstay", "Было превышение разрешённого срока пребывания", "I overstayed a permitted period"),
+      opt("violation", "Было другое нарушение миграционных правил", "Another immigration violation"),
+      opt("pending", "Есть незавершённое дело или апелляция", "A case or appeal is pending"),
+      opt("prefer", "Предпочитаю обсудить это с юристом", "I prefer to discuss this with a lawyer"),
     ],
   },
   {
-    id: "currentStatus",
-    ru: "Каков ваш текущий статус, если вы уже находитесь в Германии?",
-    en: "What is your current status, if you are already in Germany?",
+    id: "status",
+    title: "Если вы уже в Германии, какой у вас текущий статус?",
+    en: "If you are already in Germany, what is your current status?",
     options: [
-      { value: "abroad", ru: "Нахожусь за пределами Германии", en: "I am outside Germany" },
-      { value: "valid", ru: "Есть действующая виза или вид на жительство", en: "I have a valid visa or residence permit" },
-      { value: "student", ru: "Нахожусь в Германии как студент", en: "I am in Germany as a student" },
-      { value: "work", ru: "Нахожусь в Германии по работе", en: "I am in Germany for work" },
-      { value: "expired", ru: "Документы истекли или ситуация сложная", en: "My documents expired or my situation is complicated" },
-      { value: "unknown", ru: "Не уверен(-а)", en: "Not sure" },
+      opt("none", "Я за пределами Германии", "I am outside Germany"),
+      opt("visa", "Действующая национальная виза D", "Valid national D visa"),
+      opt("permit", "Действующий вид на жительство", "Valid residence permit"),
+      opt("eu", "Гражданство ЕС/ЕЭЗ или Швейцарии", "EU/EEA or Swiss citizenship"),
+      opt("temporary", "Временная защита или другой специальный статус", "Temporary protection or another special status"),
+      opt("expired", "Срок действия визы или ВНЖ истёк", "My visa or residence permit has expired"),
+      opt("uncertain", "Не уверен в своём статусе", "I am unsure of my status"),
     ],
   },
   {
     id: "protection",
-    ru: "Связана ли ваша ситуация с опасением преследования или серьёзной опасности в стране происхождения?",
-    en: "Does your situation involve fear of persecution or serious danger in your country of origin?",
+    title: "Связана ли ваша ситуация с преследованием, войной или угрозой безопасности?",
+    en: "Is your situation related to persecution, war or a safety threat?",
+    description: "Убежище и гуманитарная защита рассматриваются индивидуально компетентными органами.",
+    descriptionEn: "Asylum and humanitarian protection are assessed individually by the competent authorities.",
     options: [
-      { value: "yes", ru: "Да", en: "Yes" },
-      { value: "no", ru: "Нет", en: "No" },
-      { value: "unsure", ru: "Не уверен(-а)", en: "Not sure" },
+      opt("yes", "Да, мне может требоваться защита", "Yes, I may need protection"),
+      opt("temporary", "Возможно, мне подходит временная защита", "Temporary protection may be relevant"),
+      opt("no", "Нет", "No"),
+      opt("unsure", "Не уверен", "Not sure"),
     ],
   },
 ];
 
-const routes: Route[] = [
+const ROUTES: Omit<Route, "score">[] = [
   {
-    id: "visitor",
-    emoji: "🧳",
-    title: "Шенгенская виза для краткой поездки",
-    enTitle: "Schengen visa for a short stay",
-    visa: "Краткосрочное пребывание — обычно до 90 дней в течение 180 дней",
-    desc: "Для туризма, посещения семьи и друзей, деловых встреч и других разрешённых краткосрочных целей.",
-    enDesc: "For tourism, visiting family and friends, business meetings and other permitted short-stay purposes.",
-    link: "https://www.auswaertiges-amt.de/en/visa-service",
-    requirements: "Необходимость визы зависит от гражданства и обстоятельств. Обычно требуется подтвердить цель поездки, средства, размещение и намерение соблюдать срок пребывания. Краткосрочная виза не даёт общего права работать в Германии.",
-    enRequirements: "Whether you need a visa depends on your nationality and circumstances. Applicants generally need to demonstrate the purpose of travel, funds, accommodation and compliance with the permitted stay. A short-stay visa does not provide a general right to work in Germany.",
-    goals: ["visit"],
+    id: "work",
+    title: "Виза для квалифицированных специалистов",
+    titleEn: "Visa for qualified professionals",
+    category: "Работа",
+    categoryEn: "Employment",
+    description: "Маршрут для квалифицированных специалистов с признанным или сопоставимым профессиональным образованием и подходящим предложением работы.",
+    descriptionEn: "A route for qualified professionals with a recognised or comparable qualification and suitable employment.",
+    requirements: [
+      "Подходящая квалификация: профессиональное образование или высшее образование в соответствии с правилами конкретного разрешения.",
+      "Для многих случаев требуется конкретное предложение квалифицированной работы в Германии.",
+      "Для регулируемых профессий может понадобиться признание квалификации и разрешение на профессиональную деятельность.",
+      "Для граждан стран вне ЕС/ЕЭЗ обычно необходимо заранее проверить визовые требования.",
+    ],
+    requirementsEn: [
+      "A suitable qualification, depending on the specific residence permit.",
+      "A concrete offer of qualified employment is required in many cases.",
+      "Regulated professions may require recognition and a professional licence.",
+      "Nationals of countries outside the EU/EEA generally need to check visa requirements before travelling.",
+    ],
+    limitations: [
+      "Одного трудового договора может быть недостаточно: проверяются квалификация, условия работы и применимые нормы.",
+      "Для отдельных категорий действуют дополнительные требования, включая возрастные или финансовые.",
+      "Разрешение на работу не следует считать автоматическим правом на постоянное проживание.",
+    ],
+    limitationsEn: [
+      "An employment contract alone may not be sufficient; qualifications and employment conditions are assessed.",
+      "Additional age or financial requirements may apply to certain categories.",
+      "A work permit does not automatically grant permanent residence.",
+    ],
+    officialUrl: "https://www.make-it-in-germany.com/en/visa-residence/types/work-qualified-professionals",
   },
   {
     id: "bluecard",
-    emoji: "💼",
-    title: "Голубая карта ЕС",
-    enTitle: "EU Blue Card",
-    visa: "EU Blue Card — Blaue Karte EU",
-    desc: "Для квалифицированных специалистов с подходящим предложением работы и соответствующей квалификацией.",
-    enDesc: "For qualified professionals with a suitable job offer and qualifying credentials.",
-    link: "https://www.make-it-in-germany.com/en/visa-recognition/visa-types/eu-blue-card",
-    requirements: "Обычно необходимы признанная или сопоставимая квалификация, конкретное предложение работы, соответствие должности квалификации и установленному порогу зарплаты. Порог зависит от года и категории профессии; для некоторых IT-специалистов действуют особые условия.",
-    enRequirements: "Usually requires a recognised or comparable qualification, a specific job offer, a role matching the qualification and the applicable salary threshold. The threshold depends on the year and occupation category; special rules apply to some IT professionals.",
-    goals: ["work", "permanent"],
-  },
-  {
-    id: "work",
-    emoji: "🧰",
-    title: "Рабочая виза для квалифицированных специалистов",
-    enTitle: "Work visa for qualified professionals",
-    visa: "Skilled worker residence permit",
-    desc: "Для специалистов с профессиональным или высшим образованием, которые получили подходящее предложение работы в Германии.",
-    enDesc: "For people with vocational or academic qualifications who have a suitable job offer in Germany.",
-    link: "https://www.make-it-in-germany.com/en/visa-recognition/visa-types/work-qualified-professionals",
-    requirements: "Как правило, необходимо признание или сопоставимость квалификации, подходящая работа и выполнение требований к профессии. Для регулируемых профессий может потребоваться отдельное разрешение. Одного предложения работы недостаточно для автоматического получения визы.",
-    enRequirements: "Generally requires recognition or comparability of qualifications, suitable employment and compliance with occupation-specific rules. Regulated professions may require a separate licence. A job offer alone does not guarantee a visa.",
-    goals: ["work", "permanent"],
+    title: "Голубая карта ЕС (EU Blue Card)",
+    titleEn: "EU Blue Card",
+    category: "Квалифицированная работа",
+    categoryEn: "Qualified employment",
+    description: "Специальный вариант для подходящих специалистов с высшим образованием или соответствующей квалификацией, отвечающих требованиям к работе и заработной плате.",
+    descriptionEn: "A route for eligible professionals who meet the qualification, employment and salary requirements.",
+    requirements: [
+      "Подходящее предложение работы в Германии.",
+      "Высшее образование или другая допустимая квалификационная основа согласно действующим правилам.",
+      "Зарплата должна соответствовать установленному порогу; он зависит от категории и ежегодно может меняться.",
+      "Для регулируемых профессий могут потребоваться признание и лицензия.",
+    ],
+    requirementsEn: [
+      "A suitable job offer in Germany.",
+      "A qualifying higher education degree or another permitted qualification basis.",
+      "The salary must meet the applicable threshold, which can vary by category and year.",
+      "Recognition and a licence may be required for regulated professions.",
+    ],
+    limitations: [
+      "Не каждое рабочее предложение подходит для Голубой карты.",
+      "Порог заработной платы и правила для дефицитных профессий необходимо проверять на дату подачи.",
+      "Срок получения постоянного проживания зависит от выполнения дополнительных условий, в том числе требований к немецкому языку.",
+    ],
+    limitationsEn: [
+      "Not every job offer qualifies for an EU Blue Card.",
+      "Salary thresholds and shortage-occupation rules must be checked at the time of application.",
+      "Permanent residence depends on additional conditions, including German language requirements.",
+    ],
+    officialUrl: "https://www.make-it-in-germany.com/en/visa-residence/types/eu-blue-card",
   },
   {
     id: "opportunity",
-    emoji: "🧭",
-    title: "Карта возможностей для поиска работы",
-    enTitle: "Opportunity Card (Chancenkarte)",
-    visa: "Chancenkarte",
-    desc: "Возможность приехать для поиска квалифицированной работы, если вы соответствуете одному из предусмотренных законом наборов требований.",
-    enDesc: "A route to come to Germany to seek qualified employment if you meet one of the legal eligibility pathways.",
-    link: "https://www.make-it-in-germany.com/en/visa-residence/types/job-search-opportunity-card",
-    requirements: "В зависимости от основания могут потребоваться признанная квалификация либо соответствие балльной системе, языковые знания и подтверждение средств на проживание. Наличие диплома или опыта само по себе не гарантирует право на Chancenkarte.",
-    enRequirements: "Depending on the eligibility pathway, you may need a recognised qualification or to meet the points system, language requirements and proof of funds. A degree or work experience alone does not guarantee eligibility.",
-    goals: ["work", "permanent"],
+    title: "Карта возможностей (Chancenkarte)",
+    titleEn: "Opportunity Card (Chancenkarte)",
+    category: "Поиск работы",
+    categoryEn: "Job search",
+    description: "Возможность приехать для поиска работы без заранее оформленного трудового договора, если выполнены соответствующие квалификационные, языковые и финансовые условия.",
+    descriptionEn: "A route to come to Germany to search for work without a prior job offer if the qualification, language and financial conditions are met.",
+    requirements: [
+      "Нужно соответствовать одному из оснований получения карты возможностей.",
+      "В зависимости от основания могут учитываться признание квалификации либо баллы за образование, опыт, язык и другие факторы.",
+      "Необходимо подтвердить обеспечение средств на проживание.",
+      "Следует проверить допустимость работы во время поиска и ограничения конкретного разрешения.",
+    ],
+    requirementsEn: [
+      "You must qualify under one of the Opportunity Card pathways.",
+      "Depending on the pathway, recognised qualifications or points for education, experience, language and other factors may apply.",
+      "You must demonstrate sufficient funds for living expenses.",
+      "Check the permitted work and restrictions of the specific residence title.",
+    ],
+    limitations: [
+      "Это не гарантия трудоустройства и не автоматическое разрешение на любую работу.",
+      "Балльный вариант предполагает соблюдение минимальных условий и требуемого количества баллов.",
+      "Финансовые требования и допустимые виды занятости необходимо перепроверить перед подачей.",
+    ],
+    limitationsEn: [
+      "It does not guarantee employment or unrestricted permission to work.",
+      "The points-based pathway has minimum eligibility requirements and a required points total.",
+      "Financial requirements and permitted work must be checked before applying.",
+    ],
+    officialUrl: "https://www.make-it-in-germany.com/en/visa-recognition/opportunity-card",
   },
   {
-    id: "student",
-    emoji: "🎓",
-    title: "Студенческая виза",
-    enTitle: "Student visa",
-    visa: "Residence permit for study",
-    desc: "Для обучения в признанном немецком университете или другом подходящем учебном заведении.",
-    enDesc: "For study at a recognised German university or other eligible educational institution.",
-    link: "https://www.make-it-in-germany.com/en/visa-recognition/visa-types/studying",
-    requirements: "Обычно нужны зачисление, подтверждение финансового обеспечения и документы о знании языка, если они требуются программой. Для некоторых случаев доступны отдельные варианты въезда для поиска места обучения. Проверьте актуальный размер финансового обеспечения.",
-    enRequirements: "Usually requires admission, proof of sufficient funds and language evidence where required by the programme. Separate options may be available to seek a study place. Check the current financial requirements.",
-    goals: ["study"],
-  },
-  {
-    id: "family",
-    emoji: "👨‍👩‍👧",
-    title: "Воссоединение семьи",
-    enTitle: "Family reunification",
-    visa: "Family reunification residence permit",
-    desc: "Для определённых членов семьи, которые хотят жить вместе с родственником, законно проживающим в Германии.",
-    enDesc: "For eligible family members seeking to join a relative legally residing in Germany.",
-    link: "https://www.make-it-in-germany.com/en/visa-recognition/family-reunification",
-    requirements: "Право зависит от родства, гражданства и статуса родственника в Германии. Для супругов и детей действуют конкретные требования; в некоторых случаях нужны подтверждение жилья, средств или языковых знаний. Не каждый родственник имеет право на воссоединение.",
-    enRequirements: "Eligibility depends on the relationship, nationality and the relative's status in Germany. Specific rules apply to spouses and children; housing, funds or language evidence may be required in some cases. Not every relative qualifies.",
-    goals: ["family", "permanent"],
+    id: "study",
+    title: "Виза для учёбы в Германии",
+    titleEn: "Visa for studying in Germany",
+    category: "Образование",
+    categoryEn: "Education",
+    description: "Маршрут для поступления в признанное немецкое высшее учебное заведение или для соответствующей подготовительной программы.",
+    descriptionEn: "A route for admission to a recognised German higher education institution or an eligible preparatory programme.",
+    requirements: [
+      "Подтверждение зачисления или подходящего подготовительного этапа.",
+      "Документы об образовании, соответствующие условиям поступления.",
+      "Подтверждение средств на проживание и требуемая медицинская страховка.",
+      "Подтверждение языковых навыков, если этого требует программа.",
+    ],
+    requirementsEn: [
+      "Proof of admission or an eligible preparatory measure.",
+      "Educational documents that meet admission requirements.",
+      "Proof of sufficient living funds and required health insurance.",
+      "Proof of language proficiency where required by the programme.",
+    ],
+    limitations: [
+      "Поступление и получение визы — отдельные процессы.",
+      "Финансовые нормативы меняются; проверяйте актуальные суммы перед подачей.",
+      "Правила работы студентов ограничены условиями разрешения на проживание.",
+    ],
+    limitationsEn: [
+      "Admission and visa approval are separate processes.",
+      "Financial thresholds change and must be checked before applying.",
+      "Student work is subject to the applicable residence permit rules.",
+    ],
+    officialUrl: "https://www.make-it-in-germany.com/en/visa-recognition/visa-types/studying",
   },
   {
     id: "ausbildung",
-    emoji: "🛠️",
-    title: "Профессиональное обучение — Ausbildung",
-    enTitle: "Vocational training (Ausbildung)",
-    visa: "Visa for vocational training",
-    desc: "Для прохождения профессионального обучения в Германии, в том числе по дуальной системе с практикой у работодателя.",
-    enDesc: "For vocational training in Germany, including dual training combining classroom learning and workplace practice.",
-    link: "https://www.make-it-in-germany.com/en/visa-residence/types/visa-vocational-training",
-    requirements: "Обычно требуется место на программе обучения, достаточное финансирование и, как правило, немецкий язык на уровне, необходимом для обучения. Конкретные условия зависят от программы и обстоятельств.",
-    enRequirements: "Usually requires a training place, sufficient funds and generally German language skills appropriate for the programme. Exact requirements depend on the training and circumstances.",
-    goals: ["exchange", "work"],
+    title: "Профессиональное обучение (Ausbildung)",
+    titleEn: "Vocational training (Ausbildung)",
+    category: "Образование и профессия",
+    categoryEn: "Training",
+    description: "Маршрут для прохождения профессионального обучения в Германии, в том числе дуального обучения в компании и профессиональной школе.",
+    descriptionEn: "A route for vocational training in Germany, including dual training in a company and vocational school.",
+    requirements: [
+      "Как правило, необходимо подтверждение места обучения.",
+      "Обычно требуется немецкий язык, часто на уровне B1, если не применимо исключение.",
+      "Нужно подтвердить возможность финансировать проживание.",
+      "В зависимости от программы могут требоваться документы об образовании и дополнительные согласования.",
+    ],
+    requirementsEn: [
+      "A confirmed training place is generally required.",
+      "German language skills are usually required, often at B1 unless an exception applies.",
+      "You must demonstrate sufficient funds for living expenses.",
+      "Educational documents and additional approvals may be required depending on the programme.",
+    ],
+    limitations: [
+      "Требования различаются между школьным и дуальным профессиональным обучением.",
+      "Наличие места обучения не гарантирует выдачу визы.",
+      "Если места ещё нет, проверьте отдельные правила въезда для поиска места Ausbildung.",
+    ],
+    limitationsEn: [
+      "Requirements differ between school-based and dual vocational training.",
+      "A training offer does not guarantee visa approval.",
+      "If you do not yet have a place, check the separate rules for seeking vocational training.",
+    ],
+    officialUrl: "https://www.make-it-in-germany.com/en/visa-recognition/visa-types/training",
   },
   {
-    id: "research",
-    emoji: "🔬",
-    title: "Виза для научных исследований",
-    enTitle: "Research visa",
-    visa: "Residence permit for research",
-    desc: "Для исследователей, которые приезжают работать с немецким университетом или исследовательской организацией.",
-    enDesc: "For researchers coming to work with a German university or research organisation.",
-    link: "https://www.make-it-in-germany.com/en/visa-recognition/visa-types/research",
-    requirements: "Как правило, необходимы соглашение о приёме или трудовой договор с исследовательской организацией и выполнение условий финансового обеспечения. Для докторантов подходящий тип разрешения зависит от структуры обучения и трудового договора.",
-    enRequirements: "Generally requires a hosting agreement or employment contract with a research organisation and compliance with financial requirements. For doctoral candidates, the appropriate permit depends on the study arrangement and employment contract.",
-    goals: ["research", "work"],
+    id: "family",
+    title: "Воссоединение семьи",
+    titleEn: "Family reunification",
+    category: "Семья",
+    categoryEn: "Family",
+    description: "Возможный маршрут для определённых членов семьи человека, который живёт в Германии. Требования зависят от статуса родственника и конкретного родства.",
+    descriptionEn: "A possible route for eligible family members of a person living in Germany. Requirements depend on the sponsor's status and the family relationship.",
+    requirements: [
+      "Документальное подтверждение семейной связи.",
+      "Проверка вида на жительство или гражданства принимающего родственника.",
+      "Могут требоваться документы о жилье, средствах и знании языка; существуют исключения.",
+      "Для несовершеннолетних детей и отдельных категорий действуют специальные правила.",
+    ],
+    requirementsEn: [
+      "Documentary proof of the family relationship.",
+      "Verification of the sponsor's citizenship or residence permit.",
+      "Housing, financial or language evidence may be required, subject to exceptions.",
+      "Special rules apply to minor children and certain categories.",
+    ],
+    limitations: [
+      "Не каждый родственник имеет право на воссоединение по стандартной процедуре.",
+      "Требования зависят от статуса принимающего лица и обстоятельств дела.",
+      "Необходимо проверить документы и процедуру в компетентном немецком представительстве.",
+    ],
+    limitationsEn: [
+      "Not every relative qualifies under the standard family reunification procedure.",
+      "Requirements depend on the sponsor's status and individual circumstances.",
+      "Check documents and procedures with the competent German mission.",
+    ],
+    officialUrl: "https://www.make-it-in-germany.com/en/visa-residence/types/family-reunification",
   },
   {
     id: "business",
-    emoji: "📈",
-    title: "Виза для предпринимательства и самозанятости",
-    enTitle: "Self-employment and business visa",
-    visa: "Residence permit for self-employment",
-    desc: "Для тех, кто планирует вести предпринимательскую деятельность или работать на себя в Германии.",
-    enDesc: "For people planning to establish a business or become self-employed in Germany.",
-    link: "https://www.make-it-in-germany.com/en/visa-residence/types/self-employment",
-    requirements: "Оцениваются жизнеспособность бизнес-плана, финансирование, опыт заявителя и экономический интерес или региональная потребность. Наличие капитала или идеи само по себе не гарантирует разрешение.",
-    enRequirements: "Authorities assess the viability of the business plan, financing, the applicant's experience and the economic interest or regional need. Capital or an idea alone does not guarantee approval.",
-    goals: ["business"],
+    title: "Предпринимательство или самостоятельная деятельность",
+    titleEn: "Self-employment or freelancing",
+    category: "Бизнес",
+    categoryEn: "Business",
+    description: "Вариант для предпринимателей и фрилансеров, если деятельность соответствует немецким требованиям и есть основания для соответствующего разрешения.",
+    descriptionEn: "A route for entrepreneurs and freelancers whose planned activity meets the German requirements for the relevant residence permit.",
+    requirements: [
+      "Описание деятельности и подходящий бизнес-план, если он необходим.",
+      "Подтверждение финансирования и способности обеспечивать собственное проживание.",
+      "Для коммерческого бизнеса могут оцениваться экономический интерес и региональная потребность.",
+      "Для регулируемой деятельности могут потребоваться разрешения или профессиональная лицензия.",
+    ],
+    requirementsEn: [
+      "A description of the activity and a suitable business plan where required.",
+      "Proof of financing and ability to support yourself.",
+      "Commercial businesses may be assessed for economic interest and regional demand.",
+      "Regulated activities may require permits or professional licences.",
+    ],
+    limitations: [
+      "Регистрация компании сама по себе не предоставляет право на проживание.",
+      "Правила для Freiberufler и Gewerbe различаются.",
+      "Планируемый доход и финансовые доказательства оцениваются индивидуально.",
+    ],
+    limitationsEn: [
+      "Registering a company alone does not grant residence rights.",
+      "Rules for freelancers and commercial businesses differ.",
+      "Projected income and financial evidence are assessed individually.",
+    ],
+    officialUrl: "https://www.make-it-in-germany.com/en/working-in-germany/starting-business/visa/visa-for-self-employed-business",
   },
   {
     id: "recognition",
-    emoji: "📚",
-    title: "Виза для признания квалификации",
-    enTitle: "Visa for recognition of qualifications",
-    visa: "Recognition of foreign qualifications",
-    desc: "Для заявителей, которым необходимо пройти процедуру признания зарубежного профессионального образования или компенсирующие мероприятия.",
-    enDesc: "For applicants who need recognition of foreign professional qualifications or compensatory measures.",
-    link: "https://www.make-it-in-germany.com/en/visa-residence/types/visa-recognition-foreign-qualifications",
-    requirements: "Необходимо соответствовать условиям конкретной процедуры признания и предоставить документы о квалификации. В зависимости от профессии могут потребоваться языковые знания и дополнительные меры обучения.",
-    enRequirements: "You must meet the conditions of the relevant recognition procedure and provide qualification documents. Depending on the occupation, language skills and additional training measures may be required.",
-    goals: ["work", "exchange"],
+    title: "Признание иностранной квалификации",
+    titleEn: "Recognition of foreign qualifications",
+    category: "Квалификация",
+    categoryEn: "Qualifications",
+    description: "Если для вашей профессии требуется признание диплома или дополнительная квалификация, стоит проверить процедуру до выбора рабочего маршрута.",
+    descriptionEn: "If your profession requires qualification recognition or additional training, check the process before choosing a work route.",
+    requirements: [
+      "Документы об образовании и профессиональном опыте.",
+      "Определение компетентного органа для конкретной профессии.",
+      "Для регулируемых профессий могут требоваться лицензия, языковые экзамены или адаптационные мероприятия.",
+      "В зависимости от результата могут быть доступны дополнительные визовые варианты.",
+    ],
+    requirementsEn: [
+      "Educational documents and professional experience evidence.",
+      "Identification of the competent authority for your profession.",
+      "Regulated professions may require a licence, language exams or adaptation measures.",
+      "Additional visa routes may be available depending on the result.",
+    ],
+    limitations: [
+      "Признание не является единым процессом для всех профессий.",
+      "Процедура может занять время и потребовать перевода документов.",
+      "Результат зависит от конкретной квалификации и регулирующих правил.",
+    ],
+    limitationsEn: [
+      "Recognition is not a single process for every occupation.",
+      "The process can take time and may require translated documents.",
+      "The outcome depends on the qualification and applicable rules.",
+    ],
+    officialUrl: "https://www.make-it-in-germany.com/en/visa-residence/recognition",
+  },
+  {
+    id: "visitor",
+    title: "Краткосрочная поездка в Германию",
+    titleEn: "Short stay in Germany",
+    category: "Визит",
+    categoryEn: "Visit",
+    description: "Для краткосрочного туризма, посещения семьи или деловой поездки может подойти безвизовый режим либо шенгенская виза — в зависимости от гражданства и цели поездки.",
+    descriptionEn: "For short tourism, family visits or business trips, visa-free entry or a Schengen visa may apply depending on nationality and purpose.",
+    requirements: [
+      "Проверка визовых требований по гражданству и документу для поездки.",
+      "Действительный проездной документ и соблюдение допустимого срока пребывания.",
+      "При необходимости — подтверждение цели поездки, средств и условий размещения.",
+      "Для работы или длительного проживания обычно нужен другой правовой маршрут.",
+    ],
+    requirementsEn: [
+      "Check visa requirements based on nationality and travel document.",
+      "A valid travel document and compliance with the permitted stay period.",
+      "Where required, evidence of purpose, funds and accommodation.",
+      "Work or long-term residence usually requires a different legal route.",
+    ],
+    limitations: [
+      "Краткосрочный визит обычно не даёт права работать.",
+      "Безвизовый въезд зависит от гражданства и других условий.",
+      "Правило 90 дней из 180 дней применяется к соответствующим краткосрочным поездкам в Шенгенской зоне.",
+    ],
+    limitationsEn: [
+      "A short-stay visit generally does not authorise employment.",
+      "Visa-free entry depends on nationality and other conditions.",
+      "The 90-days-in-any-180-day-period rule applies to relevant short stays in the Schengen Area.",
+    ],
+    officialUrl: "https://www.auswaertiges-amt.de/en/visa-service",
+  },
+  {
+    id: "permanent",
+    title: "Постоянный вид на жительство (Niederlassungserlaubnis)",
+    titleEn: "Settlement permit (Niederlassungserlaubnis)",
+    category: "Постоянное проживание",
+    categoryEn: "Permanent residence",
+    description: "Постоянное разрешение на проживание может быть доступно после выполнения требований, которые зависят от вашего текущего статуса и истории проживания.",
+    descriptionEn: "A settlement permit may be available after meeting requirements that depend on your current status and residence history.",
+    requirements: [
+      "Подходящий текущий вид на жительство и необходимый период проживания, если он предусмотрен соответствующей нормой.",
+      "Как правило, учитываются средства к существованию и пенсионные взносы в применимых случаях.",
+      "Могут требоваться немецкий язык, базовые знания правового и общественного устройства, жильё.",
+      "Для отдельных категорий, включая некоторых обладателей Голубой карты, предусмотрены специальные условия.",
+    ],
+    requirementsEn: [
+      "An eligible current residence permit and the required residence period where applicable.",
+      "Livelihood and pension contributions are generally assessed where required.",
+      "German language, knowledge of the legal and social system, and housing may be required.",
+      "Special rules apply to certain categories, including some EU Blue Card holders.",
+    ],
+    limitations: [
+      "Единого срока для всех категорий нет.",
+      "Временная защита и некоторые специальные статусы регулируются отдельно.",
+      "Перед подачей необходимо проверить условия для вашего конкретного разрешения.",
+    ],
+    limitationsEn: [
+      "There is no single qualifying period for every category.",
+      "Temporary protection and certain special statuses are subject to separate rules.",
+      "Check the requirements for your specific residence permit before applying.",
+    ],
+    officialUrl: "https://www.make-it-in-germany.com/en/visa-residence/living-permanently-in-germany",
+  },
+  {
+    id: "citizenship",
+    title: "Натурализация и гражданство Германии",
+    titleEn: "German naturalisation and citizenship",
+    category: "Гражданство",
+    categoryEn: "Citizenship",
+    description: "Натурализация возможна при соблюдении требований немецкого законодательства к сроку проживания, статусу, языку и другим условиям.",
+    descriptionEn: "Naturalisation may be possible if you meet German legal requirements for residence, status, language and other conditions.",
+    requirements: [
+      "Необходимый срок законного обычного проживания; стандартные сроки и исключения нужно проверять по действующему закону.",
+      "Подходящий статус проживания и подтверждение личности и гражданства.",
+      "Как правило, требуется немецкий язык на уровне B1 и знание правового и общественного устройства, если не применяется исключение.",
+      "Обычно проверяются способность обеспечивать себя, отсутствие определённых судимостей и другие законные условия.",
+    ],
+    requirementsEn: [
+      "The required period of lawful habitual residence; standard periods and exceptions must be checked under current law.",
+      "Eligible residence status and proof of identity and nationality.",
+      "German at B1 and knowledge of the legal and social system are generally required unless an exception applies.",
+      "Livelihood, certain criminal convictions and other statutory conditions are generally assessed.",
+    ],
+    limitations: [
+      "Заполнение анкеты не подтверждает право на гражданство.",
+      "Срок проживания сам по себе не гарантирует положительное решение.",
+      "Правила могут меняться; решение принимает компетентный орган по гражданству.",
+    ],
+    limitationsEn: [
+      "Completing this questionnaire does not establish eligibility for citizenship.",
+      "The residence period alone does not guarantee approval.",
+      "Rules can change; the competent naturalisation authority makes the decision.",
+    ],
+    officialUrl: "https://www.einbuergerung.de/",
   },
   {
     id: "protection",
-    emoji: "🛡️",
     title: "Убежище и международная защита",
-    enTitle: "Asylum and international protection",
-    visa: "Отдельная процедура по законодательству о защите",
-    desc: "Это не обычная иммиграционная виза. Возможность получить защиту зависит от индивидуальных обстоятельств и применимого законодательства.",
-    enDesc: "This is not an ordinary immigration visa. Eligibility depends on individual circumstances and applicable law.",
-    link: "https://www.bamf.de/EN/Themen/AsylFluechtlingsschutz/asylfluechtlingsschutz-node.html",
-    requirements: "Процедура защиты отличается от обычной визовой подачи. Навигатор не оценивает доказательства, риски возвращения или юридическое право на убежище. По возможности обратитесь за независимой квалифицированной консультацией.",
-    enRequirements: "The protection procedure differs from an ordinary visa application. This navigator does not assess evidence, return risks or legal eligibility for asylum. Seek qualified independent advice where possible.",
-    goals: ["protection"],
+    titleEn: "Asylum and international protection",
+    category: "Защита",
+    categoryEn: "Protection",
+    description: "Если вы опасаетесь преследования или серьёзного вреда при возвращении, изучите официальную процедуру убежища и доступные консультационные службы.",
+    descriptionEn: "If you fear persecution or serious harm upon return, review the official asylum process and available advice services.",
+    requirements: [
+      "Рассмотрение проводится компетентными органами на основании индивидуальных обстоятельств.",
+      "Важно сообщать правдивую информацию и по возможности сохранять относящиеся к делу документы.",
+      "Для людей с временной защитой могут действовать отдельные правила.",
+      "При необходимости следует получить квалифицированную правовую консультацию.",
+    ],
+    requirementsEn: [
+      "The competent authorities assess each case based on individual circumstances.",
+      "Provide truthful information and preserve relevant documents where possible.",
+      "Separate rules may apply to people covered by temporary protection.",
+      "Seek qualified legal advice where necessary.",
+    ],
+    limitations: [
+      "Нельзя заранее гарантировать предоставление убежища или определённого статуса.",
+      "Процедура зависит от обстоятельств, применимого права и компетенции органов.",
+      "Не следует выбирать этот маршрут только как альтернативу обычной миграции.",
+    ],
+    limitationsEn: [
+      "Asylum or a particular protection status cannot be guaranteed in advance.",
+      "The process depends on the circumstances, applicable law and competent authorities.",
+      "This route should not be used merely as an alternative to ordinary immigration.",
+    ],
+    officialUrl: "https://www.bamf.de/EN/Themen/AsylFluechtlingsschutz/asylfluechtlingsschutz-node.html",
   },
 ];
 
-function getScore(id: string, a: Answers): number {
-  const goal = a.goal;
-
-  const hasFamily = ["citizen", "resident", "fiance"].includes(a.familyUS);
-  const hasOffer = a.jobOffer === "yes";
-  const workReady = hasOffer && a.sponsor === "yes";
-  const strongAchievement = a.achievements === "strong";
-  const someAchievement = a.achievements === "some";
-  const hasFunds = ["yes", "sponsor"].includes(a.funds);
-  const skilled = ["bachelor", "master", "vocational"].includes(a.education);
-  const experienced = ["3plus", "specialist", "manager", "research"].includes(a.workExperience);
-  const strongLanguage = ["advanced", "native"].includes(a.english);
-  const usableLanguage = ["intermediate", "advanced", "native"].includes(a.english);
-
-  let score = 0;
-
-  switch (id) {
-    case "visitor": {
-      if (goal !== "visit") return 0;
-
-      score = 45;
-
-      if (a.visitDuration === "under90") score += 10;
-      if (a.visitDuration === "over90") score -= 25;
-      if (a.visitDuration === "unsure") score -= 5;
-
-      if (a.visitPurpose === "tourism") score += 5;
-      if (a.visitPurpose === "business") score += 8;
-      if (a.visitPurpose === "medical") score += 3;
-      if (a.visitPurpose === "transit") score += 3;
-      if (a.visitPurpose === "other") score -= 5;
-
-      if (hasFunds) score += 15;
-      if (a.funds === "no") score -= 20;
-
-      if (a.passport === "yes") score += 5;
-      if (a.passport === "no") score -= 30;
-      if (a.passport === "unknown") score -= 5;
-
-      if (["otherEU", "de"].includes(a.citizenship)) score += 5;
-      if (a.citizenship === "unknown") score -= 5;
-
-      if (a.residence === "de") score += 3;
-      if (a.residence === "unknown") score -= 2;
-
-      if (a.vwpRestrictions === "none") score += 3;
-      if (a.vwpRestrictions === "restrictedTravel") score -= 10;
-      if (a.vwpRestrictions === "dualNationality") score -= 2;
-      if (a.vwpRestrictions === "denied") score -= 18;
-      if (a.vwpRestrictions === "unknown") score -= 4;
-
-      if (a.immigrationHistory === "refusal") score -= 12;
-      if (a.immigrationHistory === "overstay") score -= 22;
-      if (a.immigrationHistory === "removed") score -= 30;
-      if (a.immigrationHistory === "unknown") score -= 4;
-
-      if (a.currentStatus === "expired") score -= 25;
-      if (a.currentStatus === "valid") score += 3;
-      if (a.currentStatus === "unknown") score -= 3;
-
-      if (a.age === "under18") score -= 3;
-      if (a.age === "unknown") score -= 2;
-
-      break;
-    }
-
-    case "bluecard": {
-      if (!["work", "permanent"].includes(goal)) return 0;
-
-      score = 15;
-
-      if (hasOffer) score += 25;
-      if (a.jobOffer === "maybe") score += 10;
-      if (a.jobOffer === "no") score -= 5;
-
-      if (workReady) score += 15;
-      if (a.sponsor === "no" && hasOffer) score -= 12;
-      if (a.sponsor === "unknown" && hasOffer) score -= 3;
-
-      if (a.education === "bachelor") score += 15;
-      if (a.education === "master") score += 18;
-      if (a.education === "vocational") score += 5;
-      if (a.education === "school") score -= 12;
-      if (a.education === "none") score -= 15;
-
-      if (a.workExperience === "specialist") score += 12;
-      if (a.workExperience === "3plus") score += 10;
-      if (a.workExperience === "manager") score += 8;
-      if (a.workExperience === "research") score += 8;
-      if (a.workExperience === "under3") score += 3;
-      if (a.workExperience === "none") score -= 10;
-
-      if (a.age === "18-24") score += 3;
-      if (a.age === "25-29") score += 5;
-      if (a.age === "30-35") score += 5;
-      if (a.age === "36-49") score += 2;
-      if (a.age === "50plus") score -= 3;
-      if (a.age === "under18") score -= 25;
-      if (a.age === "unknown") score -= 2;
-
-      if (strongLanguage) score += 3;
-      if (a.english === "basic") score -= 2;
-      if (a.english === "unknown") score -= 2;
-
-      if (strongAchievement) score += 5;
-      if (someAchievement) score += 2;
-
-      if (a.residence === "de") score += 2;
-      if (a.residence === "unknown") score -= 2;
-
-      if (a.currentStatus === "valid") score += 2;
-      if (a.currentStatus === "work") score += 3;
-      if (a.currentStatus === "student") score += 1;
-      if (a.currentStatus === "expired") score -= 20;
-      if (a.currentStatus === "unknown") score -= 2;
-
-      if (a.immigrationHistory === "refusal") score -= 8;
-      if (a.immigrationHistory === "overstay") score -= 18;
-      if (a.immigrationHistory === "removed") score -= 25;
-      if (a.immigrationHistory === "unknown") score -= 3;
-
-      if (a.vwpRestrictions === "denied") score -= 8;
-      if (a.vwpRestrictions === "restrictedTravel") score -= 5;
-      if (a.vwpRestrictions === "unknown") score -= 2;
-
-      if (!hasFunds) score -= 3;
-      if (a.funds === "no") score -= 5;
-
-      break;
-    }
-
-    case "work": {
-      if (!["work", "permanent"].includes(goal)) return 0;
-
-      score = 15;
-
-      if (hasOffer) score += 25;
-      if (a.jobOffer === "maybe") score += 10;
-      if (a.jobOffer === "no") score -= 5;
-
-      if (workReady) score += 15;
-      if (a.sponsor === "no" && hasOffer) score -= 12;
-      if (a.sponsor === "unknown" && hasOffer) score -= 3;
-
-      if (a.education === "bachelor") score += 12;
-      if (a.education === "master") score += 15;
-      if (a.education === "vocational") score += 15;
-      if (a.education === "school") score -= 5;
-      if (a.education === "none") score -= 10;
-
-      if (a.workExperience === "specialist") score += 12;
-      if (a.workExperience === "3plus") score += 10;
-      if (a.workExperience === "manager") score += 8;
-      if (a.workExperience === "research") score += 8;
-      if (a.workExperience === "under3") score += 3;
-      if (a.workExperience === "none") score -= 10;
-
-      if (a.age === "18-24") score += 3;
-      if (a.age === "25-29") score += 5;
-      if (a.age === "30-35") score += 5;
-      if (a.age === "36-49") score += 2;
-      if (a.age === "50plus") score -= 3;
-      if (a.age === "under18") score -= 25;
-      if (a.age === "unknown") score -= 2;
-
-      if (strongLanguage) score += 3;
-      if (a.english === "basic") score -= 2;
-      if (a.english === "unknown") score -= 2;
-
-      if (strongAchievement) score += 4;
-      if (someAchievement) score += 2;
-
-      if (a.residence === "de") score += 3;
-      if (a.residence === "unknown") score -= 2;
-
-      if (a.currentStatus === "valid") score += 2;
-      if (a.currentStatus === "work") score += 3;
-      if (a.currentStatus === "student") score += 2;
-      if (a.currentStatus === "expired") score -= 20;
-      if (a.currentStatus === "unknown") score -= 2;
-
-      if (a.immigrationHistory === "refusal") score -= 8;
-      if (a.immigrationHistory === "overstay") score -= 18;
-      if (a.immigrationHistory === "removed") score -= 25;
-      if (a.immigrationHistory === "unknown") score -= 3;
-
-      if (a.vwpRestrictions === "denied") score -= 8;
-      if (a.vwpRestrictions === "restrictedTravel") score -= 5;
-      if (a.vwpRestrictions === "unknown") score -= 2;
-
-      if (a.funds === "no") score -= 3;
-
-      break;
-    }
-
-    case "opportunity": {
-      if (!["work", "permanent"].includes(goal)) return 0;
-
-      score = 20;
-
-      if (skilled) score += 15;
-      if (a.education === "master") score += 3;
-      if (a.education === "school") score -= 8;
-      if (a.education === "none") score -= 12;
-
-      if (experienced) score += 15;
-      if (a.workExperience === "specialist") score += 5;
-      if (a.workExperience === "manager") score += 3;
-      if (a.workExperience === "under3") score += 2;
-      if (a.workExperience === "none") score -= 10;
-
-      if (hasFunds) score += 15;
-      if (a.funds === "no") score -= 20;
-
-      if (usableLanguage) score += 8;
-      if (a.english === "basic") score -= 5;
-      if (a.english === "unknown") score -= 3;
-
-      if (a.age === "18-24") score += 3;
-      if (a.age === "25-29") score += 5;
-      if (a.age === "30-35") score += 5;
-      if (a.age === "36-49") score += 2;
-      if (a.age === "50plus") score -= 3;
-      if (a.age === "under18") score -= 25;
-      if (a.age === "unknown") score -= 2;
-
-      if (a.jobOffer === "yes") score += 3;
-      if (a.jobOffer === "maybe") score += 2;
-      if (a.sponsor === "no" && hasOffer) score -= 3;
-
-      if (strongAchievement) score += 4;
-      if (someAchievement) score += 2;
-
-      if (a.residence === "de") score += 2;
-      if (a.residence === "unknown") score -= 2;
-
-      if (a.currentStatus === "valid") score += 2;
-      if (a.currentStatus === "student") score += 2;
-      if (a.currentStatus === "work") score += 2;
-      if (a.currentStatus === "expired") score -= 20;
-      if (a.currentStatus === "unknown") score -= 2;
-
-      if (a.immigrationHistory === "refusal") score -= 8;
-      if (a.immigrationHistory === "overstay") score -= 18;
-      if (a.immigrationHistory === "removed") score -= 25;
-      if (a.immigrationHistory === "unknown") score -= 3;
-
-      if (a.vwpRestrictions === "denied") score -= 8;
-      if (a.vwpRestrictions === "restrictedTravel") score -= 5;
-      if (a.vwpRestrictions === "unknown") score -= 2;
-
-      break;
-    }
-
-    case "student": {
-      if (goal !== "study") return 0;
-
-      score = 25;
-
-      if (a.studentOffer === "yes") score += 35;
-      if (a.studentOffer === "applying") score += 15;
-      if (a.studentOffer === "no") score -= 8;
-
-      if (hasFunds) score += 20;
-      if (a.funds === "no") score -= 20;
-
-      if (a.education === "bachelor" || a.education === "master") score += 5;
-      if (a.education === "school") score += 5;
-      if (a.education === "vocational") score += 2;
-      if (a.education === "none") score -= 8;
-
-      if (usableLanguage) score += 5;
-      if (a.english === "basic") score -= 3;
-      if (a.english === "unknown") score -= 2;
-
-      if (a.age === "18-24") score += 5;
-      if (a.age === "25-29") score += 3;
-      if (a.age === "30-35") score += 1;
-      if (a.age === "50plus") score -= 5;
-      if (a.age === "under18") score -= 5;
-      if (a.age === "unknown") score -= 2;
-
-      if (a.residence === "de") score += 2;
-      if (a.residence === "unknown") score -= 2;
-
-      if (a.currentStatus === "valid") score += 2;
-      if (a.currentStatus === "student") score += 4;
-      if (a.currentStatus === "work") score += 1;
-      if (a.currentStatus === "expired") score -= 20;
-      if (a.currentStatus === "unknown") score -= 2;
-
-      if (a.immigrationHistory === "refusal") score -= 8;
-      if (a.immigrationHistory === "overstay") score -= 18;
-      if (a.immigrationHistory === "removed") score -= 25;
-      if (a.immigrationHistory === "unknown") score -= 3;
-
-      if (a.vwpRestrictions === "denied") score -= 8;
-      if (a.vwpRestrictions === "restrictedTravel") score -= 5;
-      if (a.vwpRestrictions === "unknown") score -= 2;
-
-      break;
-    }
-
-    case "family": {
-      if (!["family", "permanent"].includes(goal)) return 0;
-
-      score = 15;
-
-      if (a.familyUS === "citizen") score += 55;
-      if (a.familyUS === "resident") score += 45;
-      if (a.familyUS === "fiance") score += 25;
-      if (a.familyUS === "no") score -= 10;
-      if (a.familyUS === "unknown") score -= 3;
-
-      if (goal === "family" && hasFamily) score += 10;
-      if (goal === "permanent" && hasFamily) score += 5;
-
-      if (a.age === "under18") score += 2;
-      if (a.age === "unknown") score -= 2;
-
-      if (a.residence === "de") score += 3;
-      if (a.residence === "unknown") score -= 2;
-
-      if (a.currentStatus === "valid") score += 2;
-      if (a.currentStatus === "student") score += 1;
-      if (a.currentStatus === "work") score += 1;
-      if (a.currentStatus === "expired") score -= 20;
-      if (a.currentStatus === "unknown") score -= 2;
-
-      if (a.immigrationHistory === "refusal") score -= 8;
-      if (a.immigrationHistory === "overstay") score -= 18;
-      if (a.immigrationHistory === "removed") score -= 25;
-      if (a.immigrationHistory === "unknown") score -= 3;
-
-      if (a.vwpRestrictions === "denied") score -= 8;
-      if (a.vwpRestrictions === "restrictedTravel") score -= 5;
-      if (a.vwpRestrictions === "unknown") score -= 2;
-
-      break;
-    }
-
-    case "ausbildung": {
-      if (!["exchange", "work"].includes(goal)) return 0;
-
-      score = 20;
-
-      if (a.exchangeOffer === "yes") score += 35;
-      if (a.exchangeOffer === "unknown") score += 5;
-      if (a.exchangeOffer === "no") score -= 8;
-
-      if (hasFunds) score += 15;
-      if (a.funds === "no") score -= 20;
-
-      if (a.education === "school") score += 8;
-      if (a.education === "vocational") score += 5;
-      if (a.education === "bachelor" || a.education === "master") score += 2;
-      if (a.education === "none") score -= 5;
-
-      if (usableLanguage) score += 5;
-      if (a.english === "basic") score -= 2;
-      if (a.english === "unknown") score -= 2;
-
-      if (a.age === "18-24") score += 5;
-      if (a.age === "25-29") score += 3;
-      if (a.age === "30-35") score += 1;
-      if (a.age === "50plus") score -= 5;
-      if (a.age === "under18") score -= 5;
-      if (a.age === "unknown") score -= 2;
-
-      if (a.jobOffer === "yes") score += 3;
-      if (a.jobOffer === "maybe") score += 2;
-
-      if (a.residence === "de") score += 2;
-      if (a.residence === "unknown") score -= 2;
-
-      if (a.currentStatus === "valid") score += 2;
-      if (a.currentStatus === "student") score += 2;
-      if (a.currentStatus === "expired") score -= 20;
-      if (a.currentStatus === "unknown") score -= 2;
-
-      if (a.immigrationHistory === "refusal") score -= 8;
-      if (a.immigrationHistory === "overstay") score -= 18;
-      if (a.immigrationHistory === "removed") score -= 25;
-      if (a.immigrationHistory === "unknown") score -= 3;
-
-      if (a.vwpRestrictions === "denied") score -= 8;
-      if (a.vwpRestrictions === "restrictedTravel") score -= 5;
-      if (a.vwpRestrictions === "unknown") score -= 2;
-
-      break;
-    }
-
-    case "research": {
-      if (!["research", "work"].includes(goal)) return 0;
-
-      score = 20;
-
-      if (a.workExperience === "research") score += 25;
-      if (a.workExperience === "specialist") score += 10;
-      if (a.workExperience === "3plus") score += 8;
-      if (a.workExperience === "manager") score += 5;
-      if (a.workExperience === "under3") score += 2;
-      if (a.workExperience === "none") score -= 10;
-
-      if (hasOffer) score += 25;
-      if (a.jobOffer === "maybe") score += 10;
-      if (a.jobOffer === "no") score -= 5;
-      if (a.sponsor === "no" && hasOffer) score -= 5;
-
-      if (a.education === "master") score += 15;
-      if (a.education === "bachelor") score += 10;
-      if (a.education === "vocational") score += 2;
-      if (a.education === "school" || a.education === "none") score -= 10;
-
-      if (strongAchievement) score += 10;
-      if (someAchievement) score += 5;
-
-      if (hasFunds) score += 5;
-      if (a.funds === "no") score -= 8;
-
-      if (usableLanguage) score += 3;
-      if (a.english === "basic") score -= 2;
-      if (a.english === "unknown") score -= 2;
-
-      if (a.age === "18-24") score += 2;
-      if (a.age === "25-29") score += 3;
-      if (a.age === "30-35") score += 3;
-      if (a.age === "50plus") score -= 2;
-      if (a.age === "under18") score -= 20;
-      if (a.age === "unknown") score -= 2;
-
-      if (a.residence === "de") score += 2;
-      if (a.residence === "unknown") score -= 2;
-
-      if (a.currentStatus === "valid") score += 2;
-      if (a.currentStatus === "student") score += 3;
-      if (a.currentStatus === "work") score += 2;
-      if (a.currentStatus === "expired") score -= 20;
-      if (a.currentStatus === "unknown") score -= 2;
-
-      if (a.immigrationHistory === "refusal") score -= 8;
-      if (a.immigrationHistory === "overstay") score -= 18;
-      if (a.immigrationHistory === "removed") score -= 25;
-      if (a.immigrationHistory === "unknown") score -= 3;
-
-      if (a.vwpRestrictions === "denied") score -= 8;
-      if (a.vwpRestrictions === "restrictedTravel") score -= 5;
-      if (a.vwpRestrictions === "unknown") score -= 2;
-
-      break;
-    }
-
-    case "business": {
-      if (goal !== "business") return 0;
-
-      score = 20;
-
-      if (a.business === "large") score += 25;
-      if (a.business === "company") score += 25;
-      if (a.business === "some") score += 10;
-      if (a.business === "no") score -= 20;
-
-      if (hasFunds) score += 15;
-      if (a.funds === "no") score -= 20;
-
-      if (experienced) score += 10;
-      if (a.workExperience === "specialist") score += 3;
-      if (a.workExperience === "none") score -= 5;
-
-      if (a.education === "bachelor" || a.education === "master") score += 3;
-      if (a.education === "vocational") score += 2;
-      if (a.education === "none") score -= 3;
-
-      if (strongAchievement) score += 5;
-      if (someAchievement) score += 2;
-
-      if (a.age === "18-24") score += 2;
-      if (a.age === "25-29") score += 3;
-      if (a.age === "30-35") score += 3;
-      if (a.age === "50plus") score -= 2;
-      if (a.age === "under18") score -= 25;
-      if (a.age === "unknown") score -= 2;
-
-      if (a.residence === "de") score += 2;
-      if (a.residence === "unknown") score -= 2;
-
-      if (a.currentStatus === "valid") score += 2;
-      if (a.currentStatus === "work") score += 2;
-      if (a.currentStatus === "student") score += 1;
-      if (a.currentStatus === "expired") score -= 20;
-      if (a.currentStatus === "unknown") score -= 2;
-
-      if (a.immigrationHistory === "refusal") score -= 8;
-      if (a.immigrationHistory === "overstay") score -= 18;
-      if (a.immigrationHistory === "removed") score -= 25;
-      if (a.immigrationHistory === "unknown") score -= 3;
-
-      if (a.vwpRestrictions === "denied") score -= 8;
-      if (a.vwpRestrictions === "restrictedTravel") score -= 5;
-      if (a.vwpRestrictions === "unknown") score -= 2;
-
-      break;
-    }
-
-    case "recognition": {
-      if (!["work", "exchange"].includes(goal)) return 0;
-
-      score = 20;
-
-      if (a.education === "vocational") score += 25;
-      if (a.education === "bachelor") score += 20;
-      if (a.education === "master") score += 20;
-      if (a.education === "school") score -= 5;
-      if (a.education === "none") score -= 15;
-
-      if (experienced) score += 15;
-      if (a.workExperience === "specialist") score += 5;
-      if (a.workExperience === "under3") score += 2;
-      if (a.workExperience === "none") score -= 10;
-
-      if (hasOffer) score += 5;
-      if (a.jobOffer === "maybe") score += 2;
-
-      if (a.exchangeOffer === "yes") score += 5;
-      if (a.exchangeOffer === "no") score -= 2;
-
-      if (usableLanguage) score += 3;
-      if (a.english === "basic") score -= 2;
-      if (a.english === "unknown") score -= 2;
-
-      if (a.age === "18-24") score += 2;
-      if (a.age === "25-29") score += 3;
-      if (a.age === "30-35") score += 3;
-      if (a.age === "50plus") score -= 2;
-      if (a.age === "under18") score -= 20;
-      if (a.age === "unknown") score -= 2;
-
-      if (a.residence === "de") score += 2;
-      if (a.residence === "unknown") score -= 2;
-
-      if (a.currentStatus === "valid") score += 2;
-      if (a.currentStatus === "work") score += 2;
-      if (a.currentStatus === "student") score += 1;
-      if (a.currentStatus === "expired") score -= 20;
-      if (a.currentStatus === "unknown") score -= 2;
-
-      if (a.immigrationHistory === "refusal") score -= 8;
-      if (a.immigrationHistory === "overstay") score -= 18;
-      if (a.immigrationHistory === "removed") score -= 25;
-      if (a.immigrationHistory === "unknown") score -= 3;
-
-      if (a.vwpRestrictions === "denied") score -= 8;
-      if (a.vwpRestrictions === "restrictedTravel") score -= 5;
-      if (a.vwpRestrictions === "unknown") score -= 2;
-
-      break;
-    }
-
-    case "protection": {
-      if (goal !== "protection" && a.protection !== "yes" && a.protection !== "unsure") {
-        return 0;
-      }
-
-      score = 20;
-
-      if (goal === "protection") score += 25;
-      if (a.protection === "yes") score += 35;
-      if (a.protection === "unsure") score += 10;
-      if (a.protection === "no") score -= 25;
-
-      if (a.birthCountry === "unknown") score -= 2;
-      if (a.birthCountry === "other") score += 2;
-      if (a.citizenship === "unknown") score -= 2;
-
-      if (a.residence === "de") score += 2;
-      if (a.residence === "unknown") score -= 2;
-
-      if (a.currentStatus === "expired") score -= 5;
-      if (a.currentStatus === "unknown") score -= 2;
-
-      break;
-    }
-
-    default:
-      return 0;
-  }
-
-  // Дополнительные общие поправки для релевантных маршрутов.
-  // Гражданство и страна рождения не означают автоматически право на визу или защиту.
-  if (
-    ["bluecard", "work", "opportunity", "student", "family", "ausbildung", "research", "business", "recognition", "visitor"].includes(id)
-  ) {
-    if (a.immigrationHistory === "removed") score -= 5;
-    if (a.currentStatus === "expired") score -= 3;
-  }
-
-  // Убираем незначительные случайные значения и держим процент в диапазоне 0–100.
-  return Math.max(0, Math.min(100, Math.round(score)));
+const tRu = {
+  title: "Навигатор иммиграции в Германию",
+  subtitle: "Ответьте на вопросы, чтобы предварительно определить подходящие визовые маршруты, варианты проживания, учёбы, работы и натурализации в Германии.",
+  reset: "Сбросить ответы",
+  progress: "Заполнено",
+  of: "из",
+  questions: "вопросов",
+  allQuestions: "Ваша ситуация",
+  answered: "Заполнено",
+  notAnswered: "Не заполнено",
+  choose: "Выберите ответ",
+  showResults: "Подобрать варианты",
+  results: "Возможные маршруты",
+  resultsDescription: "Результаты ранжированы по совпадению ваших ответов с общими признаками маршрутов.",
+  scoreDisclaimer: "Баллы показывают ориентировочное совпадение ответов, а не вероятность одобрения, юридическое заключение или подтверждение права на визу.",
+  noResults: "Пока недостаточно данных",
+  noResultsDescription: "Ответьте на несколько вопросов, чтобы получить предварительный список маршрутов.",
+  top: "Наиболее подходящий",
+  requirements: "Основные требования",
+  limitations: "Ограничения и что проверить",
+  official: "Официальный источник",
+  showAll: "Показать все варианты",
+  showFewer: "Свернуть список",
+  noticeTitle: "Важная информация",
+  noticeText: "Навигатор предназначен для первичной ориентации. Требования зависят от гражданства, цели въезда, индивидуальных обстоятельств и действующего законодательства Германии. Перед подачей документов сверяйтесь с официальными источниками и компетентным ведомством.",
+  rulesLink: "Официальный портал миграции",
+  passportTitle: "Проверьте требования для въезда",
+  passportText: "Необходимость визы зависит от гражданства, проездного документа, цели поездки и продолжительности пребывания. Правила краткосрочного въезда отличаются от правил работы и долгосрочного проживания.",
+  historyTitle: "Предыдущие миграционные решения",
+  historyText: "Отказы, нарушения сроков пребывания и незавершённые дела могут влиять на дальнейшие действия. В сложной ситуации полезна консультация квалифицированного миграционного юриста.",
+  expiredTitle: "Истёкший статус пребывания",
+  expiredText: "Если срок визы или вида на жительство истёк, не полагайтесь на общий результат анкеты. Незамедлительно уточните ситуацию в компетентной Ausländerbehörde и при необходимости получите юридическую консультацию.",
+  protectionTitle: "Вопросы защиты и убежища",
+  protectionText: "Если вам угрожает опасность, обратитесь за официальной информацией и квалифицированной консультацией. Не отправляйте через эту анкету документы, содержащие чувствительные сведения.",
+  generalDisclaimer: "Информация предоставляется только для общей ориентации и не является юридической консультацией. Миграционные правила Германии могут меняться. Решение о визе, разрешении на проживание, натурализации или защите принимает компетентный государственный орган.",
+  footer: "Вернуться к мировому навигатору",
+};
+
+const tEn = {
+  title: "Germany Immigration Navigator",
+  subtitle: "Answer a few questions to identify potentially relevant German visa routes, residence options, work, study and naturalisation pathways.",
+  reset: "Reset answers",
+  progress: "Completed",
+  of: "of",
+  questions: "questions",
+  allQuestions: "Your situation",
+  answered: "Answered",
+  notAnswered: "Not answered",
+  choose: "Choose an answer",
+  showResults: "Find possible routes",
+  results: "Possible routes",
+  resultsDescription: "Results are ranked according to how closely your answers match general route characteristics.",
+  scoreDisclaimer: "Scores indicate approximate alignment with your answers. They are not approval probabilities, legal advice or confirmation of visa eligibility.",
+  noResults: "Not enough information yet",
+  noResultsDescription: "Answer a few questions to see a preliminary list of routes.",
+  top: "Best match",
+  requirements: "Main requirements",
+  limitations: "Limitations and items to check",
+  official: "Official source",
+  showAll: "Show all routes",
+  showFewer: "Show fewer",
+  noticeTitle: "Important information",
+  noticeText: "This navigator is for initial orientation only. Requirements depend on nationality, purpose of entry, individual circumstances and current German law. Check official sources and the competent authority before applying.",
+  rulesLink: "Official immigration portal",
+  passportTitle: "Check entry requirements",
+  passportText: "Visa requirements depend on nationality, travel document, purpose and length of stay. Short visits are subject to different rules from employment and long-term residence.",
+  historyTitle: "Previous immigration decisions",
+  historyText: "Refusals, overstays and pending cases may affect your next steps. In complex situations, consider consulting a qualified immigration lawyer.",
+  expiredTitle: "Expired residence status",
+  expiredText: "If your visa or residence permit has expired, do not rely on this questionnaire. Contact the competent Ausländerbehörde promptly and obtain legal advice if necessary.",
+  protectionTitle: "Protection and asylum",
+  protectionText: "If you face danger, seek official information and qualified advice. Do not submit sensitive personal documents through this questionnaire.",
+  generalDisclaimer: "This information is for general orientation only and is not legal advice. German immigration rules can change. Decisions on visas, residence permits, naturalisation and protection are made by the competent public authority.",
+  footer: "Back to the world navigator",
+};
+
+function isAnswered(value?: string) {
+  return Boolean(value && value.trim());
 }
 
-export default function DEPage() {
-  const { language: lang } = useLanguage();
+function getRouteScore(id: string, a: Answers): number {
+  let score = 0;
+  const euCitizen = a.citizenship === "eu";
+
+  if (euCitizen) {
+    if (["work", "study", "family", "business", "permanent"].includes(id)) score += 42;
+    if (["bluecard", "opportunity", "visitor"].includes(id)) score += 10;
+  } else {
+    if (id === "work" && a.goal === "work") score += 30;
+    if (id === "bluecard" && a.goal === "bluecard") score += 35;
+    if (id === "opportunity" && (a.goal === "jobsearch" || a.jobOffer === "no")) score += 28;
+    if (id === "study" && a.goal === "study") score += 35;
+    if (id === "ausbildung" && a.goal === "ausbildung") score += 35;
+    if (id === "family" && a.goal === "family") score += 35;
+    if (id === "business" && a.goal === "business") score += 35;
+    if (id === "visitor" && a.goal === "visit") score += 35;
+    if (id === "permanent" && a.goal === "permanent") score += 35;
+    if (id === "citizenship" && a.goal === "citizenship") score += 35;
+    if (id === "protection" && a.goal === "protection") score += 40;
+    if (id === "recognition" && (a.goal === "recognition" || a.recognition === "pending" || a.recognition === "notstarted")) score += 25;
+  }
+
+  if (id === "work") {
+    if (a.jobOffer === "yes") score += 25;
+    if (["vocational", "bachelor", "master", "regulated"].includes(a.education)) score += 14;
+    if (["recognized", "notneeded"].includes(a.recognition)) score += 12;
+    if (["2-5", "5plus"].includes(a.workExperience)) score += 8;
+    if (a.jobOffer === "no") score -= 8;
+  }
+
+  if (id === "bluecard") {
+    if (["bachelor", "master"].includes(a.education)) score += 20;
+    if (a.jobOffer === "yes") score += 24;
+    if (["recognized", "notneeded"].includes(a.recognition)) score += 8;
+    if (a.profession === "it" && ["2-5", "5plus"].includes(a.workExperience)) score += 5;
+    if (a.jobOffer === "no") score -= 15;
+  }
+
+  if (id === "opportunity") {
+    if (a.jobOffer === "no") score += 18;
+    if (["vocational", "bachelor", "master"].includes(a.education)) score += 14;
+    if (["2-5", "5plus"].includes(a.workExperience)) score += 8;
+    if (["a2", "b1", "b2", "c1"].includes(a.german)) score += 8;
+    if (["b2", "c1"].includes(a.english)) score += 5;
+    if (a.funds === "no") score -= 15;
+  }
+
+  if (id === "study") {
+    if (["yes", "conditional"].includes(a.studyOffer)) score += 25;
+    if (["bachelor", "master"].includes(a.education)) score += 5;
+    if (a.funds === "yes" || a.funds === "sponsor") score += 12;
+    if (a.funds === "no") score -= 12;
+    if (a.studyOffer === "no") score -= 8;
+  }
+
+  if (id === "ausbildung") {
+    if (a.studyOffer === "training") score += 28;
+    if (["a2", "b1", "b2", "c1"].includes(a.german)) score += 8;
+    if (a.age === "under18" || a.age === "18-29" || a.age === "30-34") score += 4;
+    if (a.funds === "yes" || a.funds === "sponsor") score += 5;
+  }
+
+  if (id === "family") {
+    if (["spouse", "child", "parent"].includes(a.family)) score += 25;
+    if (["citizen", "eu", "permanent", "work", "protection"].includes(a.familyStatus)) score += 12;
+    if (a.family === "no") score -= 20;
+  }
+
+  if (id === "business") {
+    if (["business", "freelance", "existing", "considering"].includes(a.business)) score += 25;
+    if (a.funds === "yes" || a.funds === "sponsor") score += 10;
+    if (a.business === "no") score -= 15;
+  }
+
+  if (id === "recognition") {
+    if (a.recognition === "pending") score += 20;
+    if (a.recognition === "notstarted") score += 15;
+    if (a.education === "regulated") score += 20;
+    if (a.profession === "health") score += 10;
+  }
+
+  if (id === "visitor") {
+    if (a.visitDuration === "short") score += 22;
+    if (a.goal === "visit") score += 20;
+    if (a.visitDuration === "long" || a.visitDuration === "permanent") score -= 25;
+  }
+
+  if (id === "permanent") {
+    if (a.status === "permit") score += 10;
+    if (a.residence === "germany") score += 10;
+    if (a.germanyExperience === "current" || a.germanyExperience === "yes") score += 8;
+    if (a.status === "none") score -= 8;
+  }
+
+  if (id === "citizenship") {
+    if (a.status === "permit") score += 8;
+    if (a.residence === "germany") score += 8;
+    if (a.german === "b1" || a.german === "b2" || a.german === "c1") score += 10;
+    if (a.residence === "outside") score -= 20;
+  }
+
+  if (id === "protection") {
+    if (a.protection === "yes") score += 40;
+    if (a.protection === "temporary") score += 20;
+    if (a.protection === "no") score -= 30;
+  }
+
+  if (a.status === "expired" || a.status === "uncertain") score -= 10;
+  if (a.passport === "no") score -= 5;
+
+  return Math.max(0, Math.min(100, score));
+}
+
+function getRouteWarning(id: string, a: Answers, isEnglish: boolean): string {
+  const warnings: Record<string, { ru: string; en: string }> = {
+    expired: {
+      ru: "В ваших ответах указан истёкший или неясный статус. Сначала уточните свои права и обязанности в Ausländerbehörde или у квалифицированного юриста.",
+      en: "Your answers indicate an expired or uncertain status. First clarify your rights and obligations with the Ausländerbehörde or a qualified lawyer.",
+    },
+    history: {
+      ru: "Вы указали предыдущий отказ или миграционную проблему. Она может повлиять на заявление; оцените обстоятельства индивидуально.",
+      en: "You indicated a previous refusal or immigration issue. It may affect an application and should be assessed individually.",
+    },
+    funds: {
+      ru: "Подтверждение средств может быть обязательным. Проверьте актуальные требования именно для этого маршрута.",
+      en: "Proof of funds may be mandatory. Check the current requirements for this specific route.",
+    },
+  };
+
+  if (a.status === "expired" || a.status === "uncertain") return warnings.expired[isEnglish ? "en" : "ru"];
+
+  if (["refusal", "overstay", "violation", "pending", "prefer"].includes(a.immigrationHistory)) {
+    if (["work", "bluecard", "opportunity", "study", "family", "visitor"].includes(id)) {
+      return warnings.history[isEnglish ? "en" : "ru"];
+    }
+  }
+
+  if (["study", "ausbildung", "opportunity"].includes(id) && a.funds === "no") {
+    return warnings.funds[isEnglish ? "en" : "ru"];
+  }
+
+  if (id === "bluecard" && a.jobOffer !== "yes") {
+    return isEnglish
+      ? "An eligible job offer and the applicable salary threshold are central to the EU Blue Card route."
+      : "Для Голубой карты важны подходящее предложение работы и соблюдение применимого порога заработной платы.";
+  }
+
+  if (id === "family" && !["spouse", "child", "parent"].includes(a.family)) {
+    return isEnglish
+      ? "Family reunification is generally limited to eligible family relationships. Other relatives are subject to special rules."
+      : "Воссоединение обычно доступно для определённых членов семьи. Для других родственников действуют специальные правила.";
+  }
+
+  if (id === "visitor" && a.visitDuration === "long") {
+    return isEnglish
+      ? "A short-stay visa is generally not suitable for long-term residence or employment."
+      : "Краткосрочная виза обычно не подходит для длительного проживания или работы.";
+  }
+
+  if (id === "protection" && a.protection === "unsure") {
+    return isEnglish
+      ? "Protection eligibility requires an individual assessment. Contact an authorised counselling service."
+      : "Право на защиту оценивается индивидуально. Обратитесь в квалифицированную консультационную службу.";
+  }
+
+  return "";
+}
+
+export default function GermanyPage() {
+  const language = useLanguage() as any;
+  const isEnglish =
+    language?.language === "en" ||
+    language?.locale === "en" ||
+    language?.lang === "en" ||
+    language?.isEnglish === true;
+
+  const t = isEnglish ? tEn : tRu;
   const [answers, setAnswers] = useState<Answers>({});
   const [showAll, setShowAll] = useState(false);
+  const resultsRef = useRef<HTMLDivElement>(null);
 
-  const t = (ru: string, en: string) => (lang === "ru" ? ru : en);
-  const answered = questions.filter((q) => Boolean(answers[q.id])).length;
+  const answered = questions.filter((q) => isAnswered(answers[q.id])).length;
+  const progress = Math.round((answered / questions.length) * 100);
 
   const results = useMemo(() => {
-    if (!answers.goal || answers.goal === "unsure") return [];
-
-    return routes
-      .map((route) => ({ ...route, score: getScore(route.id, answers) }))
+    return ROUTES.map((route) => ({
+      ...route,
+      score: getRouteScore(route.id, answers),
+    }))
       .filter((route) => route.score > 0)
       .sort((a, b) => b.score - a.score);
   }, [answers]);
 
   const visibleResults = showAll ? results : results.slice(0, 8);
 
-  function reset() {
-    setAnswers({});
-    setShowAll(false);
+  const hasImmigrationHistory = [
+    "refusal",
+    "overstay",
+    "violation",
+    "pending",
+    "prefer",
+  ].includes(answers.immigrationHistory);
+
+  const hasExpiredStatus = ["expired", "uncertain"].includes(answers.status);
+  const protectionRelevant = ["yes", "temporary", "unsure"].includes(answers.protection);
+  const visitRelevant = answers.goal === "visit" || answers.visitDuration === "short";
+
+  function updateAnswer(questionId: string, value: string) {
+    setAnswers((current) => ({
+      ...current,
+      [questionId]: value,
+    }));
   }
 
-  const entryConcern =
-    answers.goal === "visit" &&
-    answers.citizenship &&
-    answers.vwpRestrictions &&
-    answers.vwpRestrictions !== "none";
+  function resetAnswers() {
+    setAnswers({});
+    setShowAll(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function getOptionLabel(question: Question, value: string) {
+    const option = question.options.find((item) => item.value === value);
+    return option ? (isEnglish ? option.en ?? option.label : option.label) : value;
+  }
+
+  function showResultsAndScroll() {
+    setShowAll(false);
+    window.setTimeout(() => {
+      resultsRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 50);
+  }
 
   return (
-    <main className="min-h-screen bg-[#080d18] text-slate-100">
+    <main className="min-h-screen bg-[#07111f] text-slate-100">
       <EsurpysNavigation />
 
-      <section className="mx-auto max-w-6xl px-5 pb-12 pt-12">
-        <div className="mb-10 rounded-3xl border border-blue-400/20 bg-gradient-to-br from-blue-950 via-slate-900 to-red-950 p-7 md:p-10">
-          <div className="mb-4">
-  <CountryFlag
-    code="DE"
-    name="Germany"
-    className="h-12 w-18 rounded-md ring-1 ring-white/10"
-  />
-</div>
-          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-blue-300">
-            {t("Иммиграционный навигатор", "Immigration navigator")}
-          </p>
-          <h1 className="mb-4 text-3xl font-bold md:text-5xl">
-            {t("Переезд в Германию", "Move to Germany")}
-          </h1>
-          <p className="max-w-3xl leading-7 text-slate-300">
-            {t(
-              "Ответьте на вопросы, чтобы увидеть предварительно подходящие визовые и иммиграционные маршруты Германии. Навигатор учитывает цель поездки, гражданство, образование, опыт, предложение работы, семейные связи и другие обстоятельства.",
-              "Answer the questions to explore potentially relevant German visa and immigration routes. The navigator considers travel purpose, nationality, education, experience, job offers, family relationships and other circumstances."
-            )}
-          </p>
-          <div className="mt-6 flex flex-wrap gap-3 text-sm text-slate-300">
-            {[
-              ["💼", "Работа", "Work"],
-              ["🎓", "Учёба", "Study"],
-              ["👨‍👩‍👧", "Семья", "Family"],
-              ["📈", "Бизнес", "Business"],
-              ["🧳", "Туризм", "Visits"],
-            ].map(([emoji, ru, en]) => (
-              <span key={ru} className="rounded-full border border-white/15 px-3 py-2">
-                {emoji} {t(ru, en)}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-          <section className="rounded-3xl border border-white/10 bg-[#0d1525] p-5 md:p-7">
-            <div className="mb-6 flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-2xl font-bold">
-                  {t("Ваша анкета", "Your questionnaire")}
-                </h2>
-                <p className="mt-1 text-sm text-slate-400">
-                  {t("Отвечено", "Answered")}: {answered} / {questions.length}
-                </p>
+      <div className="mx-auto w-full max-w-7xl px-4 pb-16 pt-8 sm:px-6 lg:px-8">
+        <header className="mb-8 rounded-3xl border border-white/10 bg-gradient-to-br from-[#10223a] via-[#0b192b] to-[#091322] p-6 shadow-2xl shadow-black/20 sm:p-8">
+          <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+            <div className="max-w-3xl">
+              <div className="mb-4 flex items-center gap-3">
+                <CountryFlag
+                  code="DE"
+                  name="Germany"
+                  className="h-12 w-18 rounded-md ring-1 ring-white/10"
+                />
               </div>
-              <button
-                type="button"
-                onClick={reset}
-                className="rounded-xl border border-white/15 px-3 py-2 text-sm text-slate-300 transition hover:bg-white/10"
-              >
-                {t("Сбросить", "Reset")}
-              </button>
+
+              <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                {t.title}
+              </h1>
+
+              <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
+                {t.subtitle}
+              </p>
             </div>
 
-            <div className="mb-3 flex items-center justify-between text-sm">
-              <span className="text-slate-400">
-                {t("Заполнение анкеты", "Questionnaire progress")}
+            <button
+              type="button"
+              onClick={resetAnswers}
+              className="inline-flex shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:border-white/30 hover:bg-white/10"
+            >
+              {t.reset}
+            </button>
+          </div>
+
+          <div className="mt-8">
+            <div className="mb-2 flex items-center justify-between gap-3 text-xs text-slate-400">
+              <span>
+                {t.progress}: {answered} {t.of} {questions.length} {t.questions}
               </span>
-              <span className="font-semibold text-blue-300">
-                {Math.round((answered / questions.length) * 100)}%
-              </span>
+              <span>{progress}%</span>
             </div>
 
             <div
-              className="mb-7 h-2 overflow-hidden rounded-full bg-white/10"
+              className="h-2 overflow-hidden rounded-full bg-slate-700/70"
               role="progressbar"
-              aria-valuenow={Math.round((answered / questions.length) * 100)}
+              aria-valuenow={progress}
               aria-valuemin={0}
               aria-valuemax={100}
+              aria-label={`${t.progress}: ${progress}%`}
             >
               <div
-                className="h-full rounded-full bg-blue-400 transition-all"
-                style={{ width: `${(answered / questions.length) * 100}%` }}
+                className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-300 transition-all duration-300"
+                style={{ width: `${progress}%` }}
               />
             </div>
+          </div>
+        </header>
 
-            <div className="space-y-6">
-              {questions.map((question, index) => (
-                <div
-                  key={question.id}
-                  className="border-b border-white/10 pb-6 last:border-0 last:pb-0"
-                >
-                  <label
-                    htmlFor={question.id}
-                    className="mb-3 block font-medium leading-6"
-                  >
-                    <span className="mr-2 text-blue-300">{index + 1}.</span>
-                    {t(question.ru, question.en)}
-                  </label>
-                  <select
-                    id={question.id}
-                    value={answers[question.id] ?? ""}
-                    onChange={(event) => {
-                      const value = event.target.value;
-                      setAnswers((previous) => ({
-                        ...previous,
-                        [question.id]: value,
-                      }));
-                    }}
-                    className="w-full rounded-xl border border-white/10 bg-[#111c30] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400"
-                  >
-                    <option value="">
-                      {t("Выберите ответ…", "Choose an answer…")}
-                    </option>
-                    {question.options.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {t(option.ru, option.en)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ))}
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)]">
+          <section className="min-w-0">
+            <div className="mb-4">
+              <h2 className="text-xl font-semibold text-white">
+                {t.allQuestions}
+              </h2>
+              <p className="mt-1 text-sm text-slate-400">
+                {isEnglish
+                  ? "Choose the answer that best describes your situation."
+                  : "Выберите ответы, которые лучше всего описывают вашу ситуацию."}
+              </p>
             </div>
+
+            <div className="space-y-4">
+              {questions.map((question, index) => {
+                const value = answers[question.id] ?? "";
+
+                return (
+                  <fieldset
+                    key={question.id}
+                    className="rounded-2xl border border-white/10 bg-[#0b1929] p-5 transition hover:border-white/15 sm:p-6"
+                  >
+                    <legend className="sr-only">
+                      {isEnglish ? question.en : question.title}
+                    </legend>
+
+                    <div className="mb-4 flex items-start gap-3">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-blue-300/20 bg-blue-400/10 text-sm font-semibold text-blue-200">
+                        {index + 1}
+                      </span>
+
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-base font-semibold leading-6 text-white">
+                          {isEnglish ? question.en : question.title}
+                        </h3>
+
+                        {(question.description || question.descriptionEn) && (
+                          <p className="mt-2 text-sm leading-6 text-slate-400">
+                            {isEnglish
+                              ? question.descriptionEn ?? question.description
+                              : question.description}
+                          </p>
+                        )}
+                      </div>
+
+                      <span
+                        className={`hidden shrink-0 rounded-full px-2.5 py-1 text-xs sm:inline-flex ${
+                          value
+                            ? "bg-emerald-400/10 text-emerald-300"
+                            : "bg-white/5 text-slate-500"
+                        }`}
+                      >
+                        {value ? t.answered : t.notAnswered}
+                      </span>
+                    </div>
+
+                    <div className="relative mt-4">
+                      <details className="group">
+                        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3.5 text-sm transition hover:border-blue-300/30 hover:bg-white/[0.05]">
+                          <span className={value ? "text-white" : "text-slate-400"}>
+                            {value ? getOptionLabel(question, value) : t.choose}
+                          </span>
+                          <span className="text-slate-400 transition group-open:rotate-180">
+                            ▾
+                          </span>
+                        </summary>
+
+                        <div className="absolute left-0 right-0 top-full z-30 mt-2 max-h-64 overflow-y-auto rounded-xl border border-white/10 bg-[#0b1929] p-2 shadow-xl">
+                          {question.options.map((option) => {
+                            const selected = value === option.value;
+
+                            return (
+                              <label
+                                key={option.value}
+                                className={`flex cursor-pointer items-center gap-3 rounded-lg px-3 py-3 text-sm transition ${
+                                  selected
+                                    ? "bg-blue-400/10 text-white"
+                                    : "text-slate-300 hover:bg-white/[0.05]"
+                                }`}
+                              >
+                                <input
+                                  type="radio"
+                                  name={question.id}
+                                  value={option.value}
+                                  checked={selected}
+                                  onChange={(event) => {
+                                    updateAnswer(question.id, option.value);
+                                    const details = event.currentTarget.closest("details");
+                                    if (details) details.open = false;
+                                  }}
+                                  className="h-4 w-4 shrink-0 accent-blue-400"
+                                />
+                                <span>{isEnglish ? option.en ?? option.label : option.label}</span>
+                                {selected && (
+                                  <span className="ml-auto text-blue-300">✓</span>
+                                )}
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </details>
+                    </div>
+                  </fieldset>
+                );
+              })}
+            </div>
+
+            <button
+              type="button"
+              onClick={showResultsAndScroll}
+              className="mt-6 w-full rounded-xl bg-blue-500 px-5 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-950/30 transition hover:bg-blue-400"
+            >
+              {t.showResults}
+            </button>
           </section>
 
-          <section>
-            <div className="mb-5 rounded-3xl border border-white/10 bg-[#0d1525] p-5 md:p-7">
-              <h2 className="text-2xl font-bold">
-                {t("Подходящие маршруты", "Potential routes")}
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-slate-400">
-                {t(
-                  "Это предварительное сопоставление ваших ответов с общими характеристиками иммиграционных категорий. Процент не является официальным баллом, юридическим заключением или вероятностью одобрения.",
-                  "This is a preliminary comparison of your answers with general immigration category characteristics. The percentage is not an official score, legal opinion or probability of approval."
-                )}
-              </p>
-              {results.length > 0 && (
-                <p className="mt-4 text-sm text-blue-300">
-                  {t("Найдено маршрутов: ", "Routes found: ")}
+          <aside className="min-w-0 lg:sticky lg:top-6 lg:self-start">
+            <div
+              ref={resultsRef}
+              className="scroll-mt-6 rounded-2xl border border-white/10 bg-[#0b1929] p-5 sm:p-6"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-semibold text-white">{t.results}</h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-400">
+                    {t.resultsDescription}
+                  </p>
+                </div>
+
+                <span className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-sm font-semibold text-slate-300">
                   {results.length}
-                </p>
+                </span>
+              </div>
+
+              <p className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/5 p-3 text-xs leading-5 text-amber-100/80">
+                {t.scoreDisclaimer}
+              </p>
+
+              {results.length === 0 ? (
+                <div className="mt-5 rounded-xl border border-dashed border-white/15 p-5">
+                  <h3 className="font-semibold text-slate-200">{t.noResults}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-400">
+                    {t.noResultsDescription}
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-5 space-y-4">
+                  {visibleResults.map((route, index) => {
+                    const warning = getRouteWarning(route.id, answers, isEnglish);
+
+                    return (
+                      <article
+                        key={route.id}
+                        className="rounded-xl border border-white/10 bg-[#081421] p-4 transition hover:border-blue-300/25"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="mb-2 flex flex-wrap items-center gap-2">
+                              <span className="rounded-md bg-blue-400/10 px-2 py-1 text-[11px] font-medium text-blue-200">
+                                {isEnglish ? route.categoryEn : route.category}
+                              </span>
+
+                              {index === 0 && (
+                                <span className="rounded-md bg-emerald-400/10 px-2 py-1 text-[11px] font-medium text-emerald-200">
+                                  {t.top}
+                                </span>
+                              )}
+                            </div>
+
+                            <h3 className="font-semibold leading-6 text-white">
+                              {isEnglish ? route.titleEn : route.title}
+                            </h3>
+                          </div>
+
+                          <div className="shrink-0 text-right">
+                            <div className="text-xl font-bold tabular-nums text-blue-200">
+                              {route.score}
+                            </div>
+                            <div className="text-[10px] text-slate-500">/100</div>
+                          </div>
+                        </div>
+
+                        <p className="mt-3 text-sm leading-6 text-slate-400">
+                          {isEnglish ? route.descriptionEn : route.description}
+                        </p>
+
+                        {warning && (
+                          <p className="mt-3 rounded-lg border border-amber-300/20 bg-amber-300/5 p-3 text-xs leading-5 text-amber-100/80">
+                            {warning}
+                          </p>
+                        )}
+
+                        <details className="group mt-4">
+                          <summary className="cursor-pointer list-none text-sm font-medium text-blue-200 marker:hidden">
+                            <span className="inline-flex items-center gap-2">
+                              {t.requirements}
+                              <span className="text-slate-500 transition group-open:rotate-180">
+                                ▾
+                              </span>
+                            </span>
+                          </summary>
+
+                          <ul className="mt-3 space-y-2 pl-4 text-sm leading-6 text-slate-300">
+                            {(isEnglish ? route.requirementsEn : route.requirements).map(
+                              (requirement) => (
+                                <li key={requirement} className="list-disc">
+                                  {requirement}
+                                </li>
+                              ),
+                            )}
+                          </ul>
+
+                          <h4 className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                            {t.limitations}
+                          </h4>
+
+                          <ul className="mt-2 space-y-2 pl-4 text-sm leading-6 text-slate-400">
+                            {(isEnglish ? route.limitationsEn : route.limitations).map(
+                              (limitation) => (
+                                <li key={limitation} className="list-disc">
+                                  {limitation}
+                                </li>
+                              ),
+                            )}
+                          </ul>
+                        </details>
+
+                        <a
+                          href={route.officialUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-blue-300 transition hover:text-blue-200"
+                        >
+                          {t.official}
+                          <span aria-hidden="true">↗</span>
+                        </a>
+                      </article>
+                    );
+                  })}
+
+                  {results.length > 8 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAll((current) => !current)}
+                      className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-medium text-slate-300 transition hover:bg-white/[0.06]"
+                    >
+                      {showAll ? t.showFewer : `${t.showAll} (${results.length})`}
+                    </button>
+                  )}
+                </div>
               )}
             </div>
 
-            {results.length === 0 ? (
-              <div className="rounded-3xl border border-dashed border-white/20 bg-[#0d1525] p-8 text-center">
-                <div className="mb-3 text-4xl">🧭</div>
-                <h3 className="font-semibold">
-                  {t("Начните с вашей цели", "Start with your goal")}
-                </h3>
-                <p className="mt-2 text-sm leading-6 text-slate-400">
-                  {t(
-                    "Выберите цель в первом вопросе. Остальные ответы помогут уточнить предварительно подходящие варианты.",
-                    "Choose your goal in the first question. Your other answers will help refine potentially relevant options."
-                  )}
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {visibleResults.map((route) => (
-                  <article
-                    key={route.id}
-                    className="rounded-3xl border border-white/10 bg-[#0d1525] p-5 transition hover:border-blue-400/40"
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/5 text-2xl">
-                        {route.emoji}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <h3 className="text-lg font-bold">
-                            {t(route.title, route.enTitle)}
-                          </h3>
-                          <span className="rounded-full bg-blue-400/10 px-3 py-1 text-sm font-semibold text-blue-300">
-                            {route.score}%
-                          </span>
-                        </div>
-
-                        <p className="mt-1 text-sm text-slate-400">{route.visa}</p>
-                        <p className="mt-3 text-sm leading-6 text-slate-300">
-                          {t(route.desc, route.enDesc)}
-                        </p>
-
-                        <div className="mt-4 rounded-xl bg-white/[0.04] p-3 text-sm leading-6 text-slate-400">
-                          <strong className="text-slate-200">
-                            {t("Основные условия: ", "Key requirements: ")}
-                          </strong>
-                          {t(route.requirements, route.enRequirements)}
-                        </div>
-
-                        {route.id === "visitor" && (
-                          <p className="mt-3 text-sm leading-6 text-amber-300">
-                            {t(
-                              "Важно: необходимость визы зависит от гражданства, цели и срока поездки. Для краткосрочных поездок обычно применяется правило 90 дней в течение 180 дней. Не используйте эту карточку как подтверждение права на въезд.",
-                              "Important: visa requirements depend on nationality, purpose and duration. Short stays generally follow the 90-days-in-any-180-day-period rule. Do not treat this card as confirmation of entry eligibility."
-                            )}
-                          </p>
-                        )}
-
-                        {route.id === "bluecard" && (
-                          <p className="mt-3 text-sm leading-6 text-amber-300">
-                            {t(
-                              "Важно: требования к зарплате и квалификации меняются. Проверьте действующие пороги и специальные условия на официальном сайте.",
-                              "Important: salary thresholds and qualification requirements can change. Check current thresholds and special conditions on the official website."
-                            )}
-                          </p>
-                        )}
-
-                        {route.id === "opportunity" && (
-                          <p className="mt-3 text-sm leading-6 text-amber-300">
-                            {t(
-                              "Важно: карта возможностей не гарантирует работу или дальнейший вид на жительство. Проверьте официальный список условий и требования к подтверждению средств.",
-                              "Important: the Opportunity Card does not guarantee a job or a subsequent residence permit. Check the official eligibility rules and proof-of-funds requirements."
-                            )}
-                          </p>
-                        )}
-
-                        {route.id === "protection" && (
-                          <p className="mt-3 text-sm leading-6 text-amber-300">
-                            {t(
-                              "Важно: это чувствительная юридическая процедура. Обратитесь к квалифицированной независимой консультационной службе или юристу, если это безопасно и доступно.",
-                              "Important: this is a sensitive legal process. Consult a qualified independent advice service or lawyer if safe and available."
-                            )}
-                          </p>
-                        )}
-
-                        <a
-                          href={route.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-blue-300 transition hover:text-blue-200"
-                        >
-                          {t("Официальная информация", "Official information")} ↗
-                        </a>
-                      </div>
-                    </div>
-                  </article>
-                ))}
-
-                {results.length > 8 && (
-                  <button
-                    type="button"
-                    onClick={() => setShowAll((previous) => !previous)}
-                    className="w-full rounded-xl border border-white/15 px-4 py-3 text-sm transition hover:bg-white/10"
-                  >
-                    {showAll
-                      ? t("Показать меньше", "Show fewer")
-                      : t(
-                          `Показать все варианты (${results.length})`,
-                          `Show all routes (${results.length})`
-                        )}
-                  </button>
-                )}
-              </div>
-            )}
-
-            {entryConcern && (
-              <div className="mt-6 rounded-2xl border border-amber-300/20 bg-amber-300/5 p-4 text-sm leading-6 text-slate-300">
-                <strong className="text-amber-200">
-                  {t("Нужна дополнительная проверка требований", "Additional eligibility review needed")}
-                </strong>
-                <p className="mt-2">
-                  {t(
-                    "Ваш ответ указывает на обстоятельства, которые могут иметь значение при подаче заявления. Проверьте требования для своего гражданства и ситуации через официальные источники.",
-                    "Your answer indicates circumstances that may matter for an application. Check the requirements for your nationality and situation through official sources."
-                  )}
-                </p>
-                <a
-                  className="mt-3 inline-block font-semibold text-blue-300 hover:text-blue-200"
-                  href="https://www.auswaertiges-amt.de/en/visa-service"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {t("Официальная визовая информация", "Official visa information")} ↗
-                </a>
-              </div>
-            )}
-
-            {answers.immigrationHistory &&
-              !["none", "unknown"].includes(answers.immigrationHistory) && (
-                <div className="mt-6 rounded-2xl border border-amber-300/20 bg-amber-300/5 p-4 text-sm leading-6 text-slate-300">
-                  <strong className="text-amber-200">
-                    {t("Внимание к иммиграционной истории", "Immigration history")}
-                  </strong>
-                  <p className="mt-2">
-                    {t(
-                      "Предыдущий отказ, нарушение условий пребывания или выдворение могут повлиять на новое заявление, но последствия зависят от обстоятельств. Перед подачей документов рассмотрите консультацию квалифицированного иммиграционного юриста.",
-                      "A previous refusal, residence violation or removal may affect a new application, but the consequences depend on the circumstances. Consider qualified immigration advice before applying."
-                    )}
-                  </p>
-                </div>
-              )}
-
-            {answers.currentStatus === "expired" && (
-              <div className="mt-6 rounded-2xl border border-amber-300/20 bg-amber-300/5 p-4 text-sm leading-6 text-slate-300">
-                <strong className="text-amber-200">
-                  {t("Возможная проблема с документами", "Potential document or status issue")}
-                </strong>
-                <p className="mt-2">
-                  {t(
-                    "Если вы уже находитесь в Германии и срок действия документов или разрешённого пребывания истёк, последствия могут быть серьёзными. Не полагайтесь на результат анкеты — обратитесь за индивидуальной юридической консультацией.",
-                    "If you are already in Germany and your documents or authorised stay have expired, the consequences may be serious. Do not rely on this questionnaire; seek individual legal advice."
-                  )}
-                </p>
-              </div>
-            )}
-
-            <div className="mt-6 rounded-2xl border border-amber-300/20 bg-amber-300/5 p-4 text-sm leading-6 text-slate-300">
-              <strong className="text-amber-200">
-                {t("Проверяйте действующие правила", "Check current rules")}
-              </strong>
-              <p className="mt-2">
-                {t(
-                  "Иммиграционные правила, сборы, требования к зарплате и финансовому обеспечению, сроки обработки заявлений и визовые ограничения могут меняться. Гражданам ЕС/ЕЭЗ и Швейцарии могут применяться другие правила, чем гражданам третьих стран. Этот навигатор не является юридической консультацией и не проверяет автоматически все требования.",
-                  "Immigration rules, fees, salary and financial requirements, processing times and visa restrictions can change. Different rules may apply to EU/EEA and Swiss citizens compared with third-country nationals. This navigator is not legal advice and does not automatically verify every requirement."
-                )}
-              </p>
-              <div className="mt-3 flex flex-wrap gap-4">
+            <div className="mt-4 space-y-4">
+              <section className="rounded-2xl border border-amber-300/20 bg-amber-300/[0.04] p-5">
+                <h3 className="font-semibold text-amber-100">{t.noticeTitle}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-300">{t.noticeText}</p>
                 <a
                   href="https://www.make-it-in-germany.com/en/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-semibold text-blue-300 hover:text-blue-200"
+                  className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-amber-200 hover:text-amber-100"
                 >
-                  Make it in Germany ↗
+                  {t.rulesLink}
+                  <span aria-hidden="true">↗</span>
                 </a>
-                <a
-                  href="https://www.auswaertiges-amt.de/en/visa-service"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-semibold text-blue-300 hover:text-blue-200"
-                >
-                  {t("МИД Германии", "Federal Foreign Office")} ↗
-                </a>
-                <a
-                  href="https://www.bamf.de/EN/Startseite/startseite_node.html"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-semibold text-blue-300 hover:text-blue-200"
-                >
-                  BAMF ↗
-                </a>
-              </div>
+              </section>
+
+              {visitRelevant && (
+                <section className="rounded-2xl border border-blue-300/20 bg-blue-300/[0.04] p-5">
+                  <h3 className="font-semibold text-blue-100">{t.passportTitle}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-300">{t.passportText}</p>
+                  <a
+                    href="https://www.auswaertiges-amt.de/en/visa-service"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-blue-200 hover:text-blue-100"
+                  >
+                    {isEnglish ? "Check official entry requirements" : "Проверить официальные требования для въезда"}
+                    <span aria-hidden="true">↗</span>
+                  </a>
+                </section>
+              )}
+
+              {hasImmigrationHistory && (
+                <section className="rounded-2xl border border-orange-300/20 bg-orange-300/[0.04] p-5">
+                  <h3 className="font-semibold text-orange-100">{t.historyTitle}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-300">{t.historyText}</p>
+                  <a
+                    href="https://www.bamf.de/EN/Startseite/startseite_node.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-orange-200 hover:text-orange-100"
+                  >
+                    {isEnglish ? "Official BAMF website" : "Официальный сайт BAMF"}
+                    <span aria-hidden="true">↗</span>
+                  </a>
+                </section>
+              )}
+
+              {hasExpiredStatus && (
+                <section className="rounded-2xl border border-red-300/20 bg-red-300/[0.04] p-5">
+                  <h3 className="font-semibold text-red-100">{t.expiredTitle}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-300">{t.expiredText}</p>
+                  <a
+                    href="https://www.make-it-in-germany.com/en/visa-residence"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-red-200 hover:text-red-100"
+                  >
+                    {isEnglish ? "Check official residence information" : "Проверить официальную информацию о проживании"}
+                    <span aria-hidden="true">↗</span>
+                  </a>
+                </section>
+              )}
+
+              {protectionRelevant && (
+                <section className="rounded-2xl border border-purple-300/20 bg-purple-300/[0.04] p-5">
+                  <h3 className="font-semibold text-purple-100">{t.protectionTitle}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-300">{t.protectionText}</p>
+                  <a
+                    href="https://www.bamf.de/EN/Themen/AsylFluechtlingsschutz/asylfluechtlingsschutz-node.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-purple-200 hover:text-purple-100"
+                  >
+                    {isEnglish ? "Official protection information" : "Официальная информация о защите"}
+                    <span aria-hidden="true">↗</span>
+                  </a>
+                </section>
+              )}
+
+              {answered > 0 && (
+                <section className="rounded-2xl border border-white/10 bg-[#0b1929] p-5">
+                  <h3 className="font-semibold text-white">
+                    {isEnglish ? "Your answers" : "Ваши ответы"}
+                  </h3>
+
+                  <div className="mt-4 space-y-3">
+                    {questions
+                      .filter((question) => isAnswered(answers[question.id]))
+                      .map((question) => (
+                        <div
+                          key={question.id}
+                          className="border-b border-white/[0.06] pb-3 last:border-0 last:pb-0"
+                        >
+                          <p className="text-xs leading-5 text-slate-500">
+                            {isEnglish ? question.en : question.title}
+                          </p>
+                          <p className="mt-1 text-sm leading-5 text-slate-300">
+                            {getOptionLabel(question, answers[question.id])}
+                          </p>
+                        </div>
+                      ))}
+                  </div>
+                </section>
+              )}
             </div>
-          </section>
+          </aside>
         </div>
 
-        <footer className="mt-10 border-t border-white/10 pt-6 text-center text-sm text-slate-500">
-          {t("Иммиграционный навигатор Германии", "Germany Immigration Navigator")} ·{" "}
+        <footer className="mt-10 border-t border-white/10 pt-6">
+          <p className="text-xs leading-6 text-slate-500">{t.generalDisclaimer}</p>
+
           <Link
             href="/world-navigator"
-            className="text-blue-300 transition hover:text-blue-200"
+            className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-blue-300 transition hover:text-blue-200"
           >
-            {t("Все страны", "All countries")}
+            <span aria-hidden="true">←</span>
+            {t.footer}
           </Link>
         </footer>
-      </section>
+      </div>
     </main>
   );
 }
