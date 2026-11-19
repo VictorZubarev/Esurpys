@@ -198,7 +198,7 @@ No open-source license is implied unless a license file is explicitly included i
 
 ## Contact
 
-For general questions, bug reports, feature suggestions, and project discussions, open an issue in the [Esurpys GitHub repository](https://github.com/VictorZubarev/Esurpys).
+For general questions, bug reports, feature suggestions, and project discussions, open an issue in the [Esurpys GitHub repository](https://github.com/ViktorZubarev/Esurpys).
 
 ---
 
